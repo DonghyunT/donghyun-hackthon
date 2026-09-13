@@ -21,8 +21,8 @@
 
 ## 2. 현재 기준 상태
 
-- 현재 작업 브랜치: `codex/cleanup-and-db-alignment` (운영 기준: `origin/feature/hackathon`).
-- 마지막 작업 커밋: `541808e` (Firebase fallback 수정, DB 문서 최신화, 레거시 스크린샷 74개 정리).
+- 현재 진행 중인 제품 코드 작업: 없음.
+- 최근 운영 병합 커밋: `f0fd456` (`codex/cleanup-and-db-alignment` 병합 완료).
 - 변경 및 보호 범위:
   * `api/chat.js`, `api/assessment.js`: Firebase Project ID 누락 시 과거 `donghyun-algo`로 향하던 Fallback 값을 최신 `donghyun-hackthon`으로 수정.
   * `js/data/firebase-config.js`: 상단 헤더 주석의 프로젝트 ID 및 정원(28명, 총 308명) 동기화.
@@ -31,8 +31,7 @@
   * `docs/PLATFORM_STRUCTURE_REVIEW.md`: 이전 기획명 `교수평기 올인원` 주석 및 `정보 놀이터` 명칭 정비.
   * `audit/*.png`(28개), `tests/results/*.png`(46개) 불필요한 과거 바이너리 스크린샷 74개 삭제 및 `.gitignore` 등록.
 - 검증: `tools/check.cjs` 70개 스크립트 문법 및 HTML 자산 검사 통과, `node --test tests/*.test.cjs` 63개 전체 통과.
-- 최신 기준은 항상 `origin/feature/hackathon`이다. 현재 작업 브랜치는 사용자 검토 및 병합 승인 대기 상태이다.
-- 최근 운영 병합 커밋: `4d3fd6c`.
+- 최신 기준은 항상 `origin/feature/hackathon`이다. 이 문서를 읽는 시점에 원격 로그를 다시 확인한다.
 - 최근 대문 제품 병합 커밋: `a5e8fd6`.
 - 2026-09-13 Vercel 운영 화면에서 HTTP 200, 정문 로봇 표시·방향키 이동·첫 안내 제거, AI 튜터 닫힘·열림, 콘솔 오류 0건을 확인했다.
 - 로컬에서 `index.html`을 `file://`로 직접 열면 외부 SVG 마스크 처리 차이로 로봇이 보이지 않을 수 있다. 개발 확인은 `node tools/preview.cjs`의 `http://127.0.0.1:4173/?demo=1`을 사용한다. 실제 로그인·저장·AI는 운영 환경에서 별도로 검증한다.

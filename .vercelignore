@@ -9,6 +9,8 @@ docs
 tests
 tools
 scratch
+schoolbooks
+*.pdf
 firebase-debug.log
 firestore-debug.log
 *.md

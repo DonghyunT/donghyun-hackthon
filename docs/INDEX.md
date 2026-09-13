@@ -11,8 +11,8 @@
 | [교육 철학](../INTENT.md) | 교육적 목적과 판단 기준 |
 | [기능 명세](../PRD.md) | 요구사항·계획·구현 상태의 단일 기준 |
 | [현재 인수인계](HACKATHON_HANDOFF.md) | 작업 브랜치·진행 상태·다음 행동 |
-| [세션 시작·종료 프롬프트](START_NEXT_SESSION.md) | PC·AI 교대 절차 |
-| [개발 안내](DEVELOPMENT.md) | 로컬 실행·검사·Git·환경 설정 |
+| [세션 시작·종료 프롬프트](START_NEXT_SESSION.md) | PC·AI 교대와 Codex→Gemini→Codex 복사용 지시문 |
+| [개발 안내](DEVELOPMENT.md) | 로컬 실행·검사·Git·AI 릴레이·환경 설정 |
 | [UX 후속 작업](UX_BACKLOG.md) | 아직 적용하지 않은 화면 전환 개선 |
 
 ## 2. 기능별 구현·검증 근거

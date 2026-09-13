@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/classroom-layout.css">
   <link rel="stylesheet" href="css/learning.css">
   <link rel="stylesheet" href="css/studio-ui.css">
+  <link rel="stylesheet" href="css/playground.css">
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between select-none relative antialiased text-sm md:text-base">
   
@@ -195,38 +196,18 @@
 
 
     <!-- [TAB 1] 🧭 단원별 학습 로드맵 (Roadmap Dashboard) -->
-    <main id="view-roadmap" class="w-full flex-1 max-w-[1720px] 2xl:max-w-[1840px] mx-auto px-4 sm:px-8 py-8">
-      <section class="home-intro bg-white rounded-3xl p-8 border border-slate-200 shadow-xs mb-8" aria-labelledby="home-heading">
-        <p class="text-indigo-600 font-bold mb-2">생각을 펼치는 우리들의 정보 시간</p>
-        <h1 id="home-heading" class="text-3xl font-black text-slate-900">정보 놀이터</h1>
-        <p class="text-slate-600 mt-2">퀴즈로 발견하고, 직접 만들며 배우는 정보 시간. 오늘 배울 내용을 골라 보세요.</p>
+    <main id="view-roadmap" class="playground-home w-full flex-1 mx-auto">
+      <section class="pg-heading" aria-labelledby="home-heading">
+        <div><p class="pg-eyebrow">생각하고, 만들고, 함께 배우는 곳</p><h1 id="home-heading">정보 놀이터</h1></div>
+        <p>가고 싶은 수업으로 한 걸음.<br><span>작은 발견이 나의 기록으로 쌓여요.</span></p>
       </section>
-
-      <section aria-labelledby="home-courses-heading" class="mb-8">
-        <div class="flex items-center gap-2 mb-4">
-          <h2 id="home-courses-heading" class="text-xl font-black text-slate-900">알고리즘</h2>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <article class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col h-full hover:border-indigo-400 hover:shadow-md transition">
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4">💡</div>
-            <h3 class="text-lg font-black text-slate-900 mb-2">문제 추상화</h3>
-            <p class="text-sm text-slate-600 flex-1">현재와 목표 상태를 정리하고, 해결에 필요한 조건을 골라 보세요.</p>
-            <button type="button" class="mt-6 w-full py-2.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-600 hover:text-white transition" onclick="switchUnit('unit1')">단원 보기</button>
-          </article>
-          <article class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col h-full hover:border-indigo-400 hover:shadow-md transition">
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4">🤖</div>
-            <h3 class="text-lg font-black text-slate-900 mb-2">알고리즘 설계</h3>
-            <p class="text-sm text-slate-600 flex-1">샌드위치 로봇에게 명령을 내리며 순서와 표현을 다듬어 보세요.</p>
-            <button type="button" class="mt-6 w-full py-2.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-600 hover:text-white transition" onclick="switchUnit('unit2')">단원 보기</button>
-          </article>
-          <article class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col h-full hover:border-indigo-400 hover:shadow-md transition">
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4">📐</div>
-            <h3 class="text-lg font-black text-slate-900 mb-2">순서도 연구소</h3>
-            <p class="text-sm text-slate-600 flex-1">순차·선택·반복을 익히고 나만의 알고리즘을 순서도로 옮겨 보세요.</p>
-            <button type="button" class="mt-6 w-full py-2.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-600 hover:text-white transition" onclick="switchUnit('unit3')">단원 보기</button>
-          </article>
-        </div>
-      </section>
+      <div id="playground-mount"></div>
+      <nav id="playground-fallback" aria-label="활동 바로가기">
+        <p>오늘 배울 내용을 골라 보세요.</p>
+        <button type="button" onclick="switchUnit('unit1')">문제 추상화</button>
+        <button type="button" onclick="switchUnit('unit2')">알고리즘 설계</button>
+        <button type="button" onclick="switchUnit('unit3')">순서도 연구소</button>
+      </nav>
     </main>
 
     <!-- [NEW VIEW] 단원 개요 -->
@@ -2473,6 +2454,9 @@
   <script src="js/core/learning-ui.js"></script>
   <script src="js/core/classroom-portal.js"></script>
   <script src="js/core/session-drafts.js"></script>
+  <script src="js/data/curriculum.js"></script>
+  <script src="js/core/playground-art.js"></script>
+  <script src="js/core/playground.js"></script>
   <script src="js/app.js"></script>
 
   <!-- ========================================== -->

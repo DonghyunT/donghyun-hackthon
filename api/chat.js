@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
       JSON.stringify(body).length>32000) return res.status(400).json({error:'요청 내용을 확인해 주세요.'});
   const token = (req.headers.authorization || '').match(/^Bearer (.+)$/)?.[1];
   let claims;
-  try { claims=await verifyFirebaseToken(token,process.env.FIREBASE_PROJECT_ID || 'donghyun-algo'); }
+  try { claims=await verifyFirebaseToken(token,process.env.FIREBASE_PROJECT_ID || 'donghyun-hackthon'); }
   catch { return res.status(401).json({error:'로그인을 확인한 뒤 다시 시도해 주세요.'}); }
   // Per-process burst protection; configure platform-wide limits before classroom rollout.
   const now=Date.now(), previous=requests.get(claims.sub);
@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
   if(requests.size>1000) for(const [key,value] of requests) if(now-value.start>=60000)requests.delete(key);
   if (!process.env.UPSTAGE_API_KEY) return res.status(503).json({error:'AI 연결 설정을 확인 중입니다. 잠시 후 다시 시도해 주세요.'});
   try {
-    if(!await reserveAiQuota(token,process.env.FIREBASE_PROJECT_ID||'donghyun-algo',process.env.AI_DAILY_LIMIT))return res.status(429).json({error:'오늘의 AI 도움 사용량에 도달했습니다. 직접 실행·수정하고 현재 상태로 제출할 수 있습니다.'});
+    if(!await reserveAiQuota(token,process.env.FIREBASE_PROJECT_ID||'donghyun-hackthon',process.env.AI_DAILY_LIMIT))return res.status(429).json({error:'오늘의 AI 도움 사용량에 도달했습니다. 직접 실행·수정하고 현재 상태로 제출할 수 있습니다.'});
   }catch{return res.status(503).json({error:'AI 사용량을 확인하지 못했습니다. 직접 실행하거나 잠시 후 다시 시도해 주세요.'});}
   try {
     const response=await fetch('https://api.upstage.ai/v1/solar/chat/completions',{

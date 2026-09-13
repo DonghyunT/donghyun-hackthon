@@ -17,7 +17,7 @@ module.exports=async(req,res)=>{
   if(req.method!=='POST')return fail(405,'POST 요청만 사용할 수 있습니다.');
   const body=req.body||{},purpose=body.purpose;
   if(!['conditions','review'].includes(purpose)||JSON.stringify(body).length>5000)return fail(400,'요청 내용을 확인해 주세요.');
-  const token=(req.headers.authorization||'').match(/^Bearer (.+)$/)?.[1],project=process.env.FIREBASE_PROJECT_ID||'donghyun-algo';
+  const token=(req.headers.authorization||'').match(/^Bearer (.+)$/)?.[1],project=process.env.FIREBASE_PROJECT_ID||'donghyun-hackthon';
   let claims;
   try{claims=await verifyFirebaseToken(token,project);}catch{return fail(401,'로그인을 확인해 주세요.');}
   const now=Date.now(),old=requests.get(claims.sub),bucket=old&&now-old.start<60000?old:{start:now,count:0};

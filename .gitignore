@@ -17,6 +17,9 @@ screenshot_*.png
 step5_*.png
 test_*.png
 *.png.tmp
+audit/*.png
+tests/results/**/*.png
+tests/results/*.png
 
 # OS/IDE 관련
 .DS_Store

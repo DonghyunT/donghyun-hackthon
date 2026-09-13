@@ -42,13 +42,12 @@
 | `css/common.css`, `css/flowchart.css` | 공통·순서도 스타일 |
 | `js/data/abstraction-data.js`, `js/data/flowchart-missions.js` | 활동 자료 |
 | `js/data/firebase-config.js` | Firebase 연결 설정 |
-| `js/data/config.example.js` | 기존 로컬 AI 설정 예시 |
 | `js/core/navigation.js`, `concept.js`, `audio.js` | 화면 전환·개념·효과음 |
 | `js/core/ai-service.js`, `ai-tutor.js` | AI 통신·튜터 |
 | `js/core/eval-service.js`, `classroom.js` | 평가 통신·교사용 화면 |
 | `js/labs/lab-abstraction.js`, `lab-sandwich.js`, `lab-quiz.js` | 실습·퀴즈 |
 | `js/labs/lab-flowchart.js`, `lab-eval.js` | 순서도·평가 화면 및 실행·채점 |
-| `api/chat.js` | AI 서버리스 프록시 |
+| `api/chat.js`, `assessment.js`, `guest-login.js` | AI 서버리스 프록시 및 게스트 인증 |
 | `firestore.rules`, `firebase.json` | 데이터 접근 규칙·도구 설정 |
 | `audit/` | 감사 보고서·재현 검사·관찰 결과 |
 | `docs/PRD_HISTORY_2026-09-12.md` | 정비 전 PRD 보존본 |

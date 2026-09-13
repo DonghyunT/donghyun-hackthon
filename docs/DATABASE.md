@@ -1,51 +1,113 @@
 # Firestore 운영 구조
 
-> 과거 서비스의 환경·절차 기록입니다. 아래 저장소·브랜치·DB를 현재 작업 대상으로 사용하지 마세요. 현재 대상은 [인수인계](HANDOFF.md), 관련 문서 선택은 [문서 안내](INDEX.md)를 따릅니다.
+> 최종 갱신: 2026-09-14 · 프로젝트 `donghyun-hackthon` · 기본 데이터베이스 `(default)`.  
+> 과거 프로젝트(`donghyun-algo`)에서 해커톤 전용 서비스(`donghyun-hackthon`)로 분리 완료된 최신 운영 데이터베이스 구조입니다.  
+> 작업 규칙은 [AGENTS.md](../AGENTS.md), 현재 작업 상태는 [인수인계](HANDOFF.md), 기능 요구사항은 [PRD.md](../PRD.md)를 단일 기준으로 삼습니다.
 
-2026-09-13 운영 기록 · 프로젝트 `donghyun-algo` · 기본 데이터베이스 `(default)`. 자유 설계 코드의 운영 배포를 완료했습니다. 기존 회차·답안은 유지하며 새 필드는 새 평가 회차부터 사용합니다.
+---
+
+## 1. 최신 Firestore 컬렉션 구조 요약
+
+현재 시스템은 **수업 및 학습 기록 축(`learning_classes`)**과 **실시간 수행평가 관제 축(`classrooms`)**의 2대 축으로 운영됩니다.
 
 ```text
-classrooms                         학급 컬렉션
-  2-1 ... 2-11                    학급 문서: schoolYear, status, attemptId, deadlineMs
-    students                      현재 회차 응시 기록
-      01 ... 27                   번호 문서: name, ownerUid, attemptId, answers, progress, status
-    archives                      이전 답안 보관
-      <UUID>                      kind, archivedAt, 당시 session
-        students
-          01 ... 27               보관 당시 학생 기록과 교사 조정 점수
-teachers
-  <Firebase Auth UID>             enabled, 관리자 등록 교사 역할
-ai_usage
-  <UTC 기준 일자 번호>             count: 여러 서버 인스턴스가 공유하는 AI 요청 수
-eval_sessions                     이전 테스트 자료. 새 앱은 사용하지 않으며 보존함
+donghyun-hackthon (Firestore default)
+├── learning_classes/                    [축 1] 수업 및 학습 기록 컬렉션
+│   └── {classId}                        2-1 ~ 2-11 (정규 학급), 2-12 (발표용 학급)
+│       └── students/
+│           └── {studentNum}             01 ~ 28 (두 자리 번호 문서): uid, name, classId, studentNum, enabled
+│               └── submissions/         학생별 원본 제출물 (불변 스냅샷)
+│                   └── {UUID}           단원별 퀴즈 답안, 실습 원본(JSON), 제출 시각
+│
+├── classrooms/                          [축 2] 실시간 수행평가 운영 컬렉션
+│   └── {classId}                        2-1 ~ 2-11, 2-12: schoolYear, status, attemptId, deadlineMs, questionVersion
+│       ├── students/
+│       │   └── {studentNum}             01 ~ 28: name, ownerUid, attemptId, answers(Part1~3), status, review
+│       └── archives/
+│           └── {UUID}                   이전 평가 회차 보관: kind, archivedAt, 당시 session, students(01~28)
+│
+├── teachers/                            [축 3] 교사 역할 관리 (RBAC)
+│   └── {Firebase Auth UID}              enabled (bool), classIds (게스트 교사는 ['2-12'] 한정)
+│
+└── ai_usage/                            [축 4] 공통 일일 AI 사용량 제어
+    └── {UTC 기준 일자 번호}              count: 여러 서버 인스턴스가 공유하는 AI 호출 횟수 카운터
 ```
 
-학급 문서 11개를 미리 생성합니다. 학생 문서는 이름 없는 가짜 명부로 채우지 않고 실제 입장 시 생성합니다. 번호는 `01`~`27`로 통일하고 숫자 `num` 필드도 저장합니다. 이름을 문서 ID로 쓰지 않습니다. 현재 명부는 응시 회차 단위이며 학생의 영구 학적 관리 기능은 아닙니다.
+---
 
-학급·학생·답안의 구분은 개인정보 접근 권한과 일치합니다. 학생은 자기 UID로 예약한 번호 문서만 읽고 수정합니다. 다른 학생 목록·이전 답안·교사 역할 생성은 거부합니다. 교사는 등록된 역할로 학급을 운영합니다. 제출 이후 변경과 마감 이후 새 답안 변경은 거부하되, 서버에 이미 저장된 같은 답안의 제출 확정은 허용합니다.
+## 2. 세부 컬렉션 명세
 
-새 평가 준비는 진행 중에는 허용하지 않습니다. 마감 후 교사가 선택하면 현재 기록을 `archives`에 보관하고 현재 번호 문서들을 비운 뒤 새 `attemptId`로 대기실을 엽니다. 보관·초기화를 하나의 Firestore 트랜잭션으로 처리합니다. 개별 재시험도 기존 답안을 먼저 보관합니다. 마감 후에는 개별 초기화로 시간을 늘리지 않고 새 평가를 준비합니다. 현재 교사 화면에는 현 회차만 표시하며 이전 회차는 Firestore 콘솔에서 확인합니다.
+### 2.1 `learning_classes` — 학생 명부 및 차시별 활동 원본
 
-브라우저 초안 키에도 회차를 포함하여 이전 평가 답안이 새 평가에 섞이지 않도록 합니다. 현재 2026학년도 설정이며 다음 학년도 명부·기록 이관은 별도 운영 절차가 필요합니다. 보관 기간은 아직 확정하지 않았으므로 자동 삭제를 설정하지 않았습니다.
+* **학급 식별**: 2학년 1~11반(`2-1` ~ `2-11`, 각 28명, 총 308명) 및 발표/시연용 학급(`2-12`).
+* **학생 명부 문서 (`students/{studentNum}`)**:
+  * 경로: `learning_classes/{classId}/students/{studentNum}` (예: `01` ~ `28`)
+  * 필드:
+    * `uid`: Firebase Auth 사용자 고유 식별자
+    * `classId`: 학급 코드 (예: `'2-1'`)
+    * `studentNum`: 출석 번호 (1 ~ 28)
+    * `name`: 학생 이름
+    * `enabled`: 계정 활성화 여부 (`true`)
+* **제출물 문서 (`submissions/{submissionId}`)**:
+  * 경로: `learning_classes/{classId}/students/{studentNum}/submissions/{submissionId}` (UUID v4)
+  * 용도: 문제 추상화, 알고리즘 설계, 순서도 연구소 등 차시 활동의 퀴즈 및 실습 원본을 제출 시점 상태로 불변 보관.
+  * 필드 (`schemaVersion: 2`):
+    * `schemaVersion`: 스키마 버전 (`2`)
+    * `unitKey`: 단원 식별자 (`'abstraction'`, `'algorithm'`, `'flowchart'`)
+    * `activityKind`: 활동 종류 (`'quiz'`, `'practice'`)
+    * `activityId`: 활동 고유 ID (예: `'flowchart-practice'`)
+    * `contentVersion`: 콘텐츠 버전 (예: `'flowchart-v1'`)
+    * `ownerUid`: 제출 학생 UID
+    * `classId`: 학급 코드
+    * `studentNum`: 번호 (int)
+    * `submittedAt`: 서버 타임스탬프 (`request.time`)
+    * `quiz`: 퀴즈 제출 시 4문항 답안 배열 (`choiceIndex`, `questionId`)
+    * `practice`: 실습 제출 시 단계(`stage`) 및 작업 결과 원본 JSON 문자열(`contentJson`, 최대 100KB)
+  * **보안 및 불변성**: 생성(`create`)만 허용되며 수정(`update`)과 삭제(`delete`)는 규칙 수준에서 완전히 차단됩니다. 학생 본인과 해당 학급 담당 교사만 열람할 수 있습니다.
 
-AI는 UID별 분당 10회 제한과 공통 일일 제한을 적용합니다. 운영 `AI_DAILY_LIMIT=300`, 규칙 상한은 1,000입니다. 카운터를 증가시킨 요청만 AI 서버로 전달하며, 사용량 저장에 실패하면 AI 요청도 중단합니다. 일자는 UTC 0시(한국 시각 오전 9시)에 바뀝니다. 실패한 AI 호출도 예약된 사용량에 포함됩니다. 이 카운터는 비용 제한이며 학급 구성원 확인이나 부정행위 방지 장치는 아닙니다.
+### 2.2 `classrooms` — 실시간 수행평가 및 회차 운영
 
-실제 서버 학생 권한 검사 13개 결과는 `tests/results/firestore-live.json`에 있습니다. 기존 `eval_sessions`의 학생 자료는 수정·삭제하지 않았습니다. 새 학급 생성 도구는 `tools/provision-firestore.cjs`이며 기본은 조회만 하고 `--apply`에서 없는 학급만 생성합니다.
+* **학급 관제 문서 (`classrooms/{classId}`)**:
+  * `schoolYear`: 학년도 (현재 2026)
+  * `status`: 평가 상태 (`'waiting'`, `'in_progress'`, `'ended'`)
+  * `attemptId`: 현재 평가 회차 고유 식별자 (UUID)
+  * `deadlineMs`: 평가 종료 마감 시각 (Epoch 밀리초)
+  * `questionVersion`: 문항 버전 (현재 자유 설계는 `3`, 이전 고정 주제는 `1`, `2`)
+* **응시생 답안 문서 (`students/{studentNum}`)**:
+  * 경로: `classrooms/{classId}/students/{studentNum}`
+  * `name`, `ownerUid`, `attemptId`: 수험자 식별
+  * `status`: 응시 상태 (`'joined'`, `'in_progress'`, `'submitted'`)
+  * `answers`:
+    * `part1`: 객관식 10문항 답안
+    * `part2`: 단답형 6문항 답안
+    * `part3`: 자유 설계 (현재·목표 상태 `plan`, 자연어 카드 배열, 캔버스 기호 및 직각 연결선)
+  * `review`:
+    * `proposal`: Solar AI의 4대 루브릭(각 10점, 총 40점) 초벌 제안, 근거, 불확실성
+    * `confirmed`: 교사가 답안과 AI 제안을 검토 후 확정한 항목별 점수, 확정 시각, 교사 UID
+* **회차 보관 (`archives/{UUID}`)**:
+  * 새 회차 준비 시 기존 학생들의 답안과 교사 확정 점수를 하나의 트랜잭션으로 `archives` 하위 `students`에 스냅샷으로 백업한 후, 현재 `students` 좌석 문서를 초기화합니다.
 
-## 2026-09-13 자유 설계 회차 필드 (코드 배포 완료)
+### 2.3 `teachers` — 교사 역할 기반 접근 제어 (RBAC)
 
-새 회차 학급 문서의 `questionVersion`은 3입니다. 버전 없는 회차는 1, 기존 고정 주제 개선 회차는 2로 보존합니다. 학생 답안 `answers.part3.plan`에 `current`, `goal`, `conditions`, `steps`를 저장합니다. 조건은 줄바꿈 문자열이며 카드 배열과 기호·연결은 기존 구조를 사용합니다.
+* **경로**: `teachers/{Firebase Auth UID}`
+* **필드**:
+  * `enabled`: 활성화 여부 (`true`)
+  * `guest`: 게스트 교사 여부 (선택적)
+  * `classIds`: 관할 학급 배열 (예: 일반 교사는 전체 학급, 게스트 교사는 `['2-12']`로 한정)
+* **보안**: 클라이언트에서 직접 생성/수정할 수 없으며 관리자 도구(`tools/firebase-admin.cjs`)를 통해서만 등록됩니다.
 
-학생 문서의 `review.proposal`은 AI의 네 항목 점수·근거·불확실성·모델·기준 버전·작성 시각을 보존합니다. `review.confirmed`는 교사가 확인한 네 항목 점수·교사 UID·확정 시각을 보존합니다. 둘 모두 `attemptId`와 당시 답안의 정규화 문자열 `sourceKey`를 기록하여 답안이 달라진 뒤 예전 점수를 적용하지 않습니다. 정규화 문자열은 개인 식별 필드와 캔버스 좌표를 제외한 설계·기호·연결의 스냅샷이므로 일부 답안 정보가 중복 저장됩니다.
+### 2.4 `ai_usage` — 일일 AI 쿼터 제어
 
-AI 제안 저장만으로 성적은 확정되지 않습니다. 확정 점수가 없으면 Part 3·총점은 `null`/채점 대기로 취급하고 CSV에 0점으로 내보내지 않습니다. 교사 확정 후 Part 1·2 자동 계산과 합산합니다. 재시험 시 review도 초기화하며 이전 검토는 기존 답안과 함께 archives에 보존됩니다.
+* **경로**: `ai_usage/{UTC 기준 일자 번호}`
+* **필드**: `count` (단조 증가 정수)
+* **작동**: Vercel Serverless Function(`api/chat.js`, `api/assessment.js`)이 Upstage Solar API를 호출하기 직전에 Firestore 트랜잭션으로 카운터를 증가시킵니다. 일일 제한(`AI_DAILY_LIMIT=300`) 도달 시 상류 호출을 차단하여 교사의 비용을 안전하게 보호합니다.
 
-기존 Firestore 규칙은 학생의 `review` 필드 생성·변경을 허용하지 않으며 교사만 변경할 수 있습니다. 이번 구현에는 규칙 변경이나 운영 자료 쓰기가 없습니다. 새 `/api/assessment`는 교사 역할과 제출 상태를 확인한 뒤 모델에 식별 정보 없이 답안 필드만 전달합니다. 조건 추천에는 현재·목표 상태만 보냅니다. 기존 `UPSTAGE_API_KEY`, `SOLAR_MODEL`, `FIREBASE_PROJECT_ID`, `AI_DAILY_LIMIT` 설정을 사용하며 공통 일일 쿼터를 소비합니다. API별 UID 분당 제한도 적용합니다.
+---
 
-## 2026-09-13 운영 구조 읽기 전용 점검
+## 3. 보안 규칙 ([firestore.rules](../firestore.rules)) 핵심 보장
 
-11개 학급을 조회했습니다. `2-1`에는 현재 회차 학생 1개와 이전 회차 보관 문서 1개가 있으며, 그 보관 문서 아래 `students`에는 당시 기록 2개가 있습니다. `2-3`에는 현재 대기 회차 학생 1개가 있고 다른 학급은 비어 있습니다. 현재·보관 학생의 회차 ID가 각각 소속 회차와 일치하며 구조 불일치는 발견하지 못했습니다. `2-1`은 기존 진행 중 상태이고 다른 학급은 대기 상태입니다. 이번 점검으로 종료·초기화하지 않았습니다.
-
-`students`와 `archives`가 같은 학급 문서 아래 보이는 것은 정상입니다. 전자는 현재 답안, 후자는 이전 회차를 보관합니다. 보관 문서 안의 `students`는 중복 명부가 아니라 해당 시점의 답안 스냅샷입니다. 두 단계의 학생 기록은 용도와 접근 권한이 다릅니다.
-
-운영 Firestore 규칙 원문은 로컬 `firestore.rules`와 일치했습니다. 보관 자료는 교사만 읽을 수 있도록 정의되어 있습니다. 이는 규칙 원문 확인이며 이번에 실제 학생 계정으로 모든 거부 사례를 다시 실행했다는 의미는 아닙니다. 기존 `eval_sessions` 문서 2개도 보존했습니다. [조회 결과](../tests/results/firestore-structure.json), 재실행 도구 `tools/audit-firestore-structure.cjs`.
+1. **학생 격리**: 학생은 자신의 UID와 일치하는 본인 번호 문서 및 본인의 `submissions`만 접근 가능합니다. 타인의 답안 열람이나 조작은 규칙에서 거부됩니다.
+2. **게스트 격리**: 발표용 게스트 토큰(`guest: true`)은 토큰 클레임과 보안 규칙 수준에서 오직 `2-12` 학급만 읽고 쓸 수 있으며, 정규 1~11반의 실제 학생 데이터에 접근할 수 없습니다.
+3. **평가 무결성**:
+   * 평가가 종료되거나 학생이 '제출 완료'한 이후에는 답안 수정이 거부됩니다.
+   * 교사 채점 영역인 `review` 필드는 학생이 임의로 생성하거나 변경할 수 없습니다.

@@ -29,6 +29,8 @@ window.authService = {
     if (this.isDemo()) return { uid: 'demo-teacher' };
     const auth = await this.ready();
     let user = auth.currentUser;
+    if (window.learningAuth?.isLocked()) throw new Error('평가에 참여 중에는 교사 계정으로 전환할 수 없습니다.');
+    if (user && !user.isAnonymous && !user.providerData?.some(p=>p.providerId==='google.com') && user.email!=='teacher@teachers.donghyun-hackthon.invalid') throw new Error('학생 계정으로 로그인되어 있습니다. 로그아웃 · 사용 종료 후 교사용으로 입장해 주세요.');
     if (!user || user.isAnonymous) user = (await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())).user;
     const role = await firebase.firestore().collection('teachers').doc(user.uid).get();
     if (!role.exists || role.data().enabled !== true) throw new Error('이 Google 계정에는 교사 권한이 없습니다. 관리자에게 계정 등록을 요청해 주세요.');
@@ -46,7 +48,7 @@ window.authService = {
 };
 
 window.finishSharedSession = async function () {
-  if (window.studentEvalApp?.joined && !window.studentEvalApp.isSubmitted) {
+  if (window.learningAuth?.busy || (window.studentEvalApp?.joined && !window.studentEvalApp.isSubmitted)) {
     alert('제출하지 않은 평가 답안이 있습니다. 먼저 제출하거나 선생님께 확인해 주세요.'); return;
   }
   if (!confirm('이 창의 로그인과 임시 작업을 지우고 사용을 종료할까요?')) return;

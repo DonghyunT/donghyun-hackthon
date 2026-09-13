@@ -26,10 +26,10 @@ class EvalService {
   read(key, fallback) { try { return JSON.parse(sessionStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
   write(key, value) { sessionStorage.setItem(key, JSON.stringify(value)); }
   identity(classId, num) {
-    if (!/^2-(?:[1-9]|10|11)$/.test(classId) || !Number.isInteger(Number(num)) || Number(num) < 1 || Number(num) > 27) throw new Error('학급과 번호를 확인해 주세요.');
+    if (!/^2-(?:[1-9]|10|11)$/.test(classId) || !Number.isInteger(Number(num)) || Number(num) < 1 || Number(num) > 28) throw new Error('학급과 번호를 확인해 주세요.');
     return String(Number(num)).padStart(2, '0');
   }
-  defaultSession(classId) { return { classId, questionVersion:3, status: 'waiting', durationMinutes: 30, startTime: null, maxStudents: 27 }; }
+  defaultSession(classId) { return { classId, questionVersion:3, status: 'waiting', durationMinutes: 30, startTime: null, maxStudents: 28 }; }
   mergeLocalStudent(classId, student) {
     const key = 'EVAL_STUDENTS_' + classId;
     const list = this.read(key, []);
@@ -89,7 +89,7 @@ class EvalService {
         const session=await tx.get(ref);
         this.checkSessionExpectation(session.exists?session.data():null, expected);
         if(session.exists && session.data().status==='in_progress')throw Error('진행 중인 평가를 먼저 마감해 주세요.');
-        const seats=await Promise.all(Array.from({length:27},(_,i)=>tx.get(ref.collection('students').doc(this.identity(classId,i+1)))));
+        const seats=await Promise.all(Array.from({length:28},(_,i)=>tx.get(ref.collection('students').doc(this.identity(classId,i+1)))));
         const archive=ref.collection('archives').doc(archiveId);
         if(session.exists || seats.some(s=>s.exists))tx.set(archive,{kind:'new-session',archivedAt,session:session.exists?session.data():{}});
         seats.filter(s=>s.exists).forEach(s=>{tx.set(archive.collection('students').doc(s.id),s.data());tx.delete(s.ref);});
@@ -130,6 +130,10 @@ class EvalService {
     const docId = this.identity(classId, studentNum);
     if (!studentName.trim() || studentName.length > 40) throw new Error('이름을 40자 이내로 입력해 주세요.');
     const user = await window.authService.student();
+    if (!this.isDemo() && window.learningAuth) {
+      const profile=await window.learningAuth.requireStudent();
+      if(profile.uid!==user.uid || profile.classId!==classId || profile.studentNum!==Number(studentNum) || profile.name!==studentName.trim())throw Error('로그인한 학생의 학급·번호·이름으로만 평가에 참여할 수 있습니다.');
+    }
     const student = { num: Number(studentNum), numStr: docId, name: studentName.trim(), ownerUid: user.uid, status: 'waiting', joinedAt: new Date().toISOString(), submittedAt: null, progress: {part1:0,part2:0,part3:0}, answers: {part1:{},part2:{},part3:{questionVersion:2,blocks:[],connections:[]}}, feedback: {} };
     const db = this.getDb();
     if (db) {

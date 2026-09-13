@@ -47,6 +47,10 @@ class StudentEvalApp {
   async resumeAssessment() {
     let identity;try{identity=JSON.parse(sessionStorage.getItem('ALGO_ACTIVE_EXAM'));}catch{}
     if(!identity)return;
+    if (!window.authService.isDemo() && window.learningAuth) {
+      try { await window.learningAuth.requireStudent(); }
+      catch { window.pendingAssessmentResume=false; sessionStorage.removeItem('ALGO_ACTIVE_EXAM'); updateAssessmentNavigation(); window.learningUI?.openLogin(); return; }
+    }
     document.getElementById('eval-st-class').value=identity.classId;
     document.getElementById('eval-st-num').value=identity.num;
     document.getElementById('eval-st-name').value=identity.name;
@@ -104,6 +108,17 @@ class StudentEvalApp {
 
   // 2. 대기실 입장 버튼 클릭
   async enterWaitingRoom() {
+    if (this.entering) return;
+    this.entering=true;
+    try {
+    if (!window.authService.isDemo() && window.learningAuth) {
+      let profile;
+      try { profile=await window.learningAuth.requireStudent(); }
+      catch(error) { window.learningUI?.openLogin(error.message,'eval'); return; }
+      document.getElementById('eval-st-class').value=profile.classId;
+      document.getElementById('eval-st-num').value=profile.studentNum;
+      document.getElementById('eval-st-name').value=profile.name;
+    }
     const classSel = document.getElementById('eval-st-class');
     const numInp = document.getElementById('eval-st-num');
     const nameInp = document.getElementById('eval-st-name');
@@ -118,8 +133,8 @@ class StudentEvalApp {
       return;
     }
 
-    if (!Number.isInteger(this.studentNum) || this.studentNum < 1 || this.studentNum > 27) {
-      alert("⚠️ 번호는 1번부터 27번 사이로 입력해 주세요!");
+    if (!Number.isInteger(this.studentNum) || this.studentNum < 1 || this.studentNum > 28) {
+      alert("⚠️ 번호는 1번부터 28번 사이로 입력해 주세요!");
       if (numInp) numInp.focus();
       return;
     }
@@ -196,6 +211,7 @@ class StudentEvalApp {
       });
     }
     if(this.isSubmitted) { this.calculateScores(); this.renderResult(); }
+    } finally { this.entering=false; }
   }
 
   // 3. 시험장 진입 및 타이머 가동

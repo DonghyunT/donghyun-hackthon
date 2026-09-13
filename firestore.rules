@@ -6,6 +6,55 @@ service cloud.firestore {
       return signedIn() && exists(/databases/$(database)/documents/teachers/$(request.auth.uid))
         && get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.enabled == true;
     }
+    function studentIdentity(classId, num) {
+      let key=num < 10 ? '0'+string(num) : string(num);
+      let profile=/databases/$(database)/documents/learning_classes/$(classId)/students/$(key);
+      return signedIn() && exists(profile) && get(profile).data.enabled == true
+        && get(profile).data.uid == request.auth.uid;
+    }
+    match /learning_classes/{classId} {
+      allow read: if teacher();
+      allow write: if false;
+      match /students/{studentNum} {
+      allow get: if teacher() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow list: if teacher();
+      allow create, update: if teacher()
+        && request.resource.data.keys().hasOnly(['uid','classId','studentNum','name','enabled'])
+        && request.resource.data.uid is string && request.resource.data.uid.size() > 0 && request.resource.data.uid.size() <= 128
+        && request.resource.data.classId == classId && request.resource.data.studentNum == int(studentNum)
+        && studentNum.matches('(0[1-9]|1[0-9]|2[0-8])')
+        && request.resource.data.classId.matches('2-([1-9]|10|11)')
+        && request.resource.data.studentNum is int && request.resource.data.studentNum >= 1 && request.resource.data.studentNum <= 28
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40
+        && request.resource.data.enabled is bool;
+      allow delete: if false;
+      match /submissions/{submissionId} {
+        function own() { return studentIdentity(classId,int(studentNum)); }
+        function answer(a, id) {
+          return a is map && a.keys().hasOnly(['questionId','choiceIndex']) && a.questionId == id
+            && (a.choiceIndex == null || (a.choiceIndex is int && a.choiceIndex >= 0 && a.choiceIndex < 4));
+        }
+        function validSnapshot() {
+          let d=request.resource.data;
+          let p=d.practice;
+          return d.keys().hasOnly(['schemaVersion','unitKey','activityId','contentVersion','quiz','practice','ownerUid','classId','studentNum','submittedAt'])
+            && d.schemaVersion == 1 && d.unitKey == 'abstraction' && d.activityId == 'abstraction-core' && d.contentVersion == 'abstraction-v1'
+            && d.ownerUid == request.auth.uid && d.classId == classId && d.studentNum == int(studentNum) && own() && d.submittedAt == request.time
+            && d.quiz.keys().hasOnly(['answers']) && d.quiz.answers is list && d.quiz.answers.size() == 4
+            && answer(d.quiz.answers[0],1) && answer(d.quiz.answers[1],2) && answer(d.quiz.answers[2],3) && answer(d.quiz.answers[3],4)
+            && p.keys().hasOnly(['currentState','goalState','conditions','conditionDraft','keptInformation','discardedInformation'])
+            && p.currentState is string && p.currentState.size() <= 4000 && p.goalState is string && p.goalState.size() <= 4000
+            && p.conditionDraft is string && p.conditionDraft.size() <= 2000
+            && p.conditions is list && p.conditions.size() <= 50
+            && p.keptInformation is list && p.keptInformation.size() <= 50
+            && p.discardedInformation is list && p.discardedInformation.size() <= 50;
+        }
+        allow read: if teacher() || own();
+        allow create: if own() && submissionId.size() == 36 && validSnapshot();
+        allow update, delete: if false;
+      }
+      }
+    }
     // Only the project administrator can provision roles using the console/Admin API.
     match /teachers/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
@@ -40,7 +89,7 @@ service cloud.firestore {
         }
       }
       match /students/{studentNum} {
-        function owner() { return signedIn() && resource.data.ownerUid == request.auth.uid; }
+        function owner() { return studentIdentity(classId,int(studentNum)) && resource.data.ownerUid == request.auth.uid; }
         function validAnswers() {
           return request.resource.data.answers is map
             && request.resource.data.answers.keys().hasOnly(['part1', 'part2', 'part3'])
@@ -54,10 +103,10 @@ service cloud.firestore {
             && request.resource.data.progress.part3 is int && request.resource.data.progress.part3 >= 0 && request.resource.data.progress.part3 <= 1;
         }
         // A missing document can be read to reserve a seat in a transaction.
-        allow get: if teacher() || (signedIn() && (!exists(/databases/$(database)/documents/classrooms/$(classId)/students/$(studentNum)) || owner()));
+        allow get: if teacher() || (studentIdentity(classId,int(studentNum)) && (!exists(/databases/$(database)/documents/classrooms/$(classId)/students/$(studentNum)) || owner()));
         allow list: if teacher();
-        allow create: if signedIn() && classId.matches('2-([1-9]|10|11)')
-          && studentNum.matches('(0[1-9]|1[0-9]|2[0-7])')
+        allow create: if studentIdentity(classId,int(studentNum)) && classId.matches('2-([1-9]|10|11)')
+          && studentNum.matches('(0[1-9]|1[0-9]|2[0-8])')
           && request.resource.data.keys().hasOnly(['num','numStr','name','ownerUid','status','joinedAt','submittedAt','progress','answers','feedback','attemptId'])
           && get(/databases/$(database)/documents/classrooms/$(classId)).data.status in ['waiting','in_progress']
           && request.resource.data.attemptId == get(/databases/$(database)/documents/classrooms/$(classId)).data.attemptId

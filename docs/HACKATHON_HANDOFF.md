@@ -17,7 +17,7 @@
 - 저장소: https://github.com/DonghyunT/donghyun-hackthon
 - 기존 PC 경로: D:\hack_thon. 새 PC에서는 실제 경로를 확인한다.
 - 운영 브랜치: feature/hackathon (main이 아님).
-- 제품 코드 기준 커밋: de13c7f68209ac4d390ececf3eda59e898befbcc. 후속 문서 정리는 제품 코드를 변경하지 않는다. 최신 문서 병합 커밋은 origin/feature/hackathon의 Git 로그로 확인한다.
+- 제품 코드 기준 커밋: a5e8fd6e7ab0c52c265164c5aa45ffb88c101f01. 후속 문서 정리는 제품 코드를 변경하지 않는다. 최신 문서 병합 커밋은 origin/feature/hackathon의 Git 로그로 확인한다.
 - 주소: https://donghyun-hackthon.vercel.app/
 - Firebase: donghyun-hackthon. 기존 서비스·DB는 변경하지 않는다.
 - HTML/CSS/Vanilla JavaScript + Vercel 서버리스 API + Firebase. 프런트엔드 프레임워크로 전환하지 않는다.
@@ -64,6 +64,7 @@
 - 사용자는 대문 지도 창이 첫 화면에 들어오고 모바일·디벗·PC에서 캐릭터 이동 의도가 바로 보이도록 개선하며, AI 튜터를 데스크톱에서 우측에 접었다 호버·초점으로 펼치는 방향을 요청했다. 기준 운영 커밋은 `f4e8c8b`, 기획은 `7ab460f`, Gemini 초안은 `a582573`이다. 초안의 CSS 대량 삭제·방향 패드 정지·검사 누락을 Codex가 `codex/review-home-viewport-tutor`에서 보완하고 로컬 화면·조작을 검증했다. 사용자 후속 요청에 따라 접힌 튜터의 한글 라벨을 완전히 숨기고 로봇의 Chrome 마스크 호환성을 보강했으며 관련 18개·전체 63개 Node 검사를 통과했다. 다음 단계는 변경 검토 후 사용자의 운영 병합·배포 승인 여부 결정이다. Gemini가 남긴 미추적 보조 스크립트 6개는 실행·수정·커밋하지 않았으며 별도 정리가 필요하다. 상세 범위와 결과는 [대문·AI 튜터 구현·검토 기록](HOME_VIEWPORT_TUTOR_PLAN.md)을 따른다.
 - 사용자는 앞으로 AI 간 구현 릴레이 대신 Codex가 계획·구현·검토·검증을 모두 담당하는 방식을 기본으로 정했다. 과거 Gemini 브랜치와 커밋은 이력으로만 보존하며, 별도 요청 없이는 다음 작업을 Gemini에 전달하지 않는다.
 - 사용자가 로컬 파일에서 로봇이 계속 보이지 않음을 확인했다. 원인은 확정하지 않았으며 추가 로봇 수정은 보류하고 Vercel 배포 뒤 재확인한다. AI 튜터는 펼쳐질 때 버튼과 라벨이 부드럽게 감속하며 나타나도록 후속 보완했다.
+- 사용자 승인으로 검토 브랜치를 원격에 푸시하고 운영 브랜치에 병합했다. 운영 병합 커밋은 `a5e8fd6`이며 Vercel에서 HTTP 200과 새 CSS 제공을 확인했다. 운영 Chrome에서 로봇 표시·방향키 이동·첫 안내 제거와 AI 튜터 닫힘·열림을 확인했고 콘솔 오류는 0건이었다. 로컬 `file://` 로봇 표시는 지원 차이로 남지만 운영 서비스에서는 정상이다.
 - 사용자 승인으로 일회성 AI 문서 6개와 기존 서비스의 PC 인수인계 1개를 삭제했다. 문서 안내를 추가하고 개발 안내·PRD·README의 참조와 과거 상태를 정리했다. 제품 코드와 DB는 변경하지 않았다.
 - 문서 구현 커밋은 196ac75, 정리 커밋은 3cbf8db이며 작업 브랜치는 codex/portable-handoff이다. 2026-09-13 사용자가 이 문서 변경의 운영 병합·배포까지 승인했다. 병합 대상은 feature/hackathon이며 새 PC에서는 원격 Git 로그로 병합 여부를 확인한 뒤 최신 운영 브랜치를 기준으로 시작한다. 실제 배포 완료는 Vercel의 대상 커밋과 READY 상태를 별도로 확인한다.
 - 시작 시 미추적 tools/update_index.cjs가 있었으며 실행하거나 커밋하지 않는다.

@@ -31,12 +31,12 @@
 - AGENTS.md, INTENT.md, PRD.md, docs/HANDOFF.md를 확인했다.
 - Gemini가 `codex/platform-structure`에서 1차 화면을 구현했다. Codex가 화면 중첩·작은 창의 복귀 버튼·탐색 상태를 보완했다. 최신 검증·병합·배포 상태는 [1차 구조 검토서](PLATFORM_STRUCTURE_REVIEW.md)를 따른다. 기록 저장과 과정점수 계산은 후속 작업이다.
 - Production 브랜치는 `feature/hackathon`이며 2026-09-13 사용자가 이번 구현의 점검·병합·배포를 승인했다. 새 저장소만 대상으로 삼는다.
-- 새 도메인의 홈 화면 접속과 새 Firebase 프로젝트·DB 존재를 확인했다. 후속 사용자 요청으로 Vercel의 Production·Preview·Development에 `FIREBASE_PROJECT_ID=donghyun-hackthon`을 등록하고 Production 재배포 Ready를 확인했다. 관리 도구 대상도 새 프로젝트로 로컬 수정했다. 실제 로그인·권한·저장·AI 검증은 별도이다.
+- 새 도메인의 홈 화면 접속과 새 Firebase 프로젝트·DB 존재를 확인했다. 후속 사용자 요청으로 Vercel의 Production·Preview·Development에 `FIREBASE_PROJECT_ID=donghyun-hackthon`을 등록했다. 1차 화면은 제품 `f656439`, 병합 `74b1f11`로 Production Ready와 도메인 반영을 확인했다. 관리 도구 대상 변경도 커밋에 포함했다. 실제 로그인·권한·저장·AI 검증은 별도이다.
 - 기존 문서의 배포 승인·완료 기록은 과거 작업의 기록이다. 이번 해커톤의 배포 승인이나 검증 결과로 해석하지 않는다.
 
 ## 다음 작업
 
-1. 서버 대상 환경 변수는 운영 반영되었고 Firebase 관리 도구 수정은 아직 로컬 변경이다. 기존 미커밋 문서 변경을 보존하며 새 인증·권한·저장 연결을 확인한다. 기존 서비스·DB는 변경하지 않는다.
+1. 새 Firebase의 실제 인증·권한·저장 연결을 확인한다. 서버 환경 변수와 관리 도구 대상은 새 프로젝트로 정리되었다. 기존 서비스·DB는 변경하지 않는다.
 2. 대표 단원의 차시·활동, 학생 식별과 기록 보관 범위를 정한 뒤 학생 제출 → 교사 조회 → 나의 기록을 연결한다.
 3. 과정점수 인정·누락·예외·환산 기준을 확정한 뒤 평가 점수에 연결한다. 이번 배포 승인을 후속 변경의 상시 배포 승인으로 확대하지 않는다.
 

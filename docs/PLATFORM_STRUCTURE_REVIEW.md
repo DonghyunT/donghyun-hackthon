@@ -30,4 +30,14 @@
 
 ## 병합·배포
 
-배포 대상은 `DonghyunT/donghyun-hackthon`의 `feature/hackathon`, Vercel `donghyun-hackthon`이다. Vercel API에서 연결 저장소와 Production 브랜치를 재확인했다. 현재 최종 검사 후 병합·배포 대기 상태이다. 기존 서비스와 DB는 변경하지 않는다.
+배포 대상은 `DonghyunT/donghyun-hackthon`의 `feature/hackathon`, Vercel `donghyun-hackthon`이다. Vercel API에서 연결 저장소와 Production 브랜치를 재확인했다.
+
+* 제품 커밋: `f656439` (`codex/platform-structure`)
+* 병합·원격 푸시: `74b1f114e272f2e72e796d6af1ce259b040b49e2` (`feature/hackathon`)
+* Production Ready: `dpl_DPNuCaJkPDhbK28CmMoNJxuBywuU`
+* 배포 주소: `https://donghyun-hackthon-98w6jj1gj-donghyun2.vercel.app`
+* 서비스 주소: [교수평기 올인원](https://donghyun-hackthon.vercel.app/)
+
+2026-09-13 12:30 KST, 서비스 주소에서 변경된 HTML·CSS·탐색·클래스룸 파일 4개의 내용을 로컬 제품과 비교했다. 네 화면 폭에서 홈 → 단원 개요 → 개념 → 개요 복귀와 기록 준비 중·평가 로비 진입을 확인했고 페이지·콘솔 오류는 없었다. [운영 확인 근거](../tests/results/platform-structure/live.json)를 확인한다. 쓰기 요청을 차단한 읽기 전용 확인이며 실제 학생 입장·제출·교사 로그인은 실행하지 않았다.
+
+기존 서비스·기존 DB·main 브랜치는 변경하지 않았다. 앞서 수정했던 새 Firebase 관리 도구 대상도 이번 커밋에 포함했다. 이 배포 결과를 기록하는 후속 문서 커밋은 제품 파일을 변경하지 않는다.

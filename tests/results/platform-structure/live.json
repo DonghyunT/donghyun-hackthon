@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-09-13T03:30:12.680Z",
+  "url": "https://donghyun-hackthon.vercel.app",
+  "files": [
+    {
+      "name": "index.html",
+      "sha256": "9d9dd960ce384bf869570e29b27f73b19f65328a11454b12014ea7bc5299e677"
+    },
+    {
+      "name": "css/studio-ui.css",
+      "sha256": "8417a51fa87cb8cbf991b8c91191092fb670b940baf4c9ceecaa9a41f8940712"
+    },
+    {
+      "name": "js/core/navigation.js",
+      "sha256": "e8b23e8302be888ea247fd3111938fcb51aecebe1b7a3ee3e976397bfcb0e6d9"
+    },
+    {
+      "name": "js/core/classroom.js",
+      "sha256": "c7340676d976a6ee342bdef2529b57db26948537c3a0f9a7376aacbc31802e3b"
+    }
+  ],
+  "checks": [
+    {
+      "width": 1440,
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "passed": true
+    },
+    {
+      "width": 768,
+      "passed": true
+    },
+    {
+      "width": 390,
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "consoleErrors": [],
+  "scope": "Read-only navigation; no login, submission, DB writes or AI calls"
+}

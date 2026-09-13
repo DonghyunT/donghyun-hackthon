@@ -10,6 +10,6 @@ const server=http.createServer((req,res)=>{
   if(!/^\/(index\.html|(?:js|css)\/[^.][\w/.-]+)$/.test(pathname)||pathname.endsWith('/config.js')){res.writeHead(404);return res.end();}
   const file=path.resolve(root,'.'+pathname);
   if(!file.startsWith(root+path.sep)){res.writeHead(403);return res.end();}
-  fs.readFile(file,(error,body)=>{if(error){res.writeHead(404);return res.end();}res.setHeader('Content-Type',file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(body);});
+  fs.readFile(file,(error,body)=>{if(error){res.writeHead(404);return res.end();}res.setHeader('Content-Type',file.endsWith('.svg')?'image/svg+xml':file.endsWith('.png')?'image/png':file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(body);});
 });
 server.listen(Number(process.env.PORT)||4173,'127.0.0.1',()=>console.log('Local review: http://127.0.0.1:'+server.address().port+'/?demo=1'));

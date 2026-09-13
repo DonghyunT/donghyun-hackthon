@@ -35,9 +35,10 @@ function campus(saved = {}, options = {}) {
     remove() { this.isConnected = false; }
   }
   function descend(node) { return node.children.flatMap(child => [child, ...descend(child)]); }
-  const body = new Element('body'), root = new Element('main'), mount = new Element('div'), fallback = new Element('nav');
+  const body = new Element('body'), root = new Element('main'), mount = new Element('div'), fallback = new Element('nav'), course = new Element('main');
   root.id = 'view-roadmap'; mount.id = 'playground-mount'; fallback.id = 'playground-fallback';
-  root.append(mount, fallback); body.append(root); document.body = body; document.activeElement = body;
+  course.id = 'view-course'; course.classList.add('hidden');
+  root.append(mount, fallback); body.append(root, course); document.body = body; document.activeElement = body;
   document.createElement = tag => new Element(tag);
   document.getElementById = id => [body, ...descend(body)].find(n => n.id === id);
   document.addEventListener = (name, fn) => { handlers.set('document:' + name, fn); };
@@ -50,7 +51,9 @@ function campus(saved = {}, options = {}) {
     matchMedia: () => media,
     isAssessmentLocked: () => locked,
     UNIT_META: Object.fromEntries(['unit1', 'unit2', 'unit3'].map(id => [id, { name: id, description: id }])),
-    switchUnit: id => { context.lastUnit = id; context.playground.leave(); root.classList.add('hidden'); },
+    hideMainViews: () => { context.playground.leave(); root.classList.add('hidden'); course.classList.add('hidden'); },
+    updateActiveNavigation: () => {}, disableStudioMode: () => {}, scrollTo: () => {}, closeMegaMenu: () => {},
+    switchUnit: id => { if (locked || pending) return; context.lastUnit = id; context.hideMainViews(); if (id === 'roadmap') root.classList.remove('hidden'); },
     setTimeout: fn => { timers.push(fn); return timers.length; }, clearTimeout() {}
   };
   Object.defineProperty(context, 'teacherSessionPending', { get: () => pending });
@@ -62,12 +65,12 @@ function campus(saved = {}, options = {}) {
   }
   function advance(count = 1) { for (let i = 0; i < count; i++) { now += 1000 / 60; const queue = [...frames.values()]; frames.clear(); queue.forEach(fn => fn(now)); } }
   advance();
-  const map = document.getElementById('playground-map'), panel = document.getElementById('playground-panel');
+  const map = document.getElementById('playground-map');
   const avatar = root.querySelectorAll('.pg-avatar')[0];
   function key(name, target = map) { let prevented = false; map.dispatch('keydown', { key: name, target, preventDefault() { prevented = true; } }); return prevented; }
   function release(name) { handlers.get('window:keyup')({ key: name }); }
   function move(name, ticks) { map.focus(); key(name); advance(ticks); release(name); }
-  return { context, root, map, panel, avatar, storage, frames, advance, key, release, move,
+  return { context, root, map, course, avatar, storage, frames, advance, key, release, move,
     finishIntro: () => timers.forEach(fn => fn()),
     systemMotion: reduced => { media.matches = reduced; media.listener?.({ matches: reduced }); },
     element: tag => new Element(tag), fire: name => handlers.get(name)?.(),
@@ -83,28 +86,29 @@ test('campus catalog has five unique domains, 25 topics, and only three existing
   assert.equal(domains.flatMap(d => d.activities).map(a => a.unitId).join(','), 'unit1,unit2,unit3');
   for (const d of domains) {
     c.context.playground.openDomain(d.id, c.map);
-    assert.equal(c.panel.open, true); assert.equal(c.panel.dataset.domain, d.id);
-    assert.equal(c.panel.querySelectorAll('.pg-topic-copy').length, d.topics.length);
-    c.panel.close();
+    assert.equal(c.course.classList.contains('hidden'), false); assert.equal(c.course.dataset.domain, d.id);
+    assert.equal(c.course.querySelectorAll('.pg-topic-copy').length, d.topics.length);
+    assert.equal(c.root.classList.contains('hidden'), true);
+    c.context.switchUnit('roadmap');
   }
 });
 
-test('all five doors are reachable from the plaza by arrows and Enter', () => {
+test('all five doors are reachable from the bottom entrance by arrows and Enter', () => {
   const routes = {
-    algorithm: [['ArrowUp', 33]], computing: [['ArrowLeft', 75]], data: [['ArrowRight', 75]],
-    ai: [['ArrowDown', 53], ['ArrowLeft', 56]], culture: [['ArrowDown', 53], ['ArrowRight', 56]]
+    algorithm: [['ArrowUp', 104]], computing: [['ArrowUp', 73], ['ArrowLeft', 70]], data: [['ArrowUp', 73], ['ArrowRight', 70]],
+    ai: [['ArrowUp', 15], ['ArrowLeft', 60]], culture: [['ArrowUp', 15], ['ArrowRight', 60]]
   };
   for (const [id, route] of Object.entries(routes)) {
     const c = campus(); route.forEach(([key, ticks]) => c.move(key, ticks)); c.key('Enter');
-    assert.equal(c.panel.open, true, `${id} opens at ${c.point()}`);
-    assert.equal(c.panel.dataset.domain, id); assert.equal(c.frames.size, 0);
+    assert.equal(c.course.classList.contains('hidden'), false, `${id} opens at ${c.point()}`);
+    assert.equal(c.course.dataset.domain, id); assert.equal(c.frames.size, 0);
   }
 });
 
 test('building collisions and outer borders stop movement while release leaves no loop', () => {
   const c = campus(); c.move('ArrowUp', 200);
-  assert.ok(c.point()[1] >= 177 && c.point()[1] <= 184, 'stops at front wall');
-  c.move('ArrowLeft', 250); assert.ok(c.point()[0] >= 34 && c.point()[0] < 42, 'left boundary');
+  assert.ok(c.point()[1] > 140 && c.point()[1] < 210, 'stops in front of algorithm building');
+  c.move('ArrowDown', 110); c.move('ArrowLeft', 250); assert.ok(c.point()[0] >= 0 && c.point()[0] < 50, 'left boundary');
   assert.equal(c.frames.size, 0); assert.equal(c.avatar.classList.contains('is-walking'), false);
 });
 
@@ -118,36 +122,35 @@ test('blur, hidden view, lock, and leave clear held keys and stop animation fram
 
 test('input keys and assessment or teacher locks cannot move or open a domain', () => {
   const c = campus(), input = c.element('input');
-  assert.equal(c.key('ArrowRight', input), false); c.advance(10); assert.deepEqual(c.point(), [500, 340]);
+  assert.equal(c.key('ArrowRight', input), false); c.advance(10); assert.deepEqual(c.point(), [500, 580]);
   for (const lock of [c.lock, c.pending]) {
     lock(true); assert.equal(c.key('ArrowRight'), false); c.context.playground.openDomain('algorithm');
-    assert.equal(c.panel.open, false); lock(false);
+    assert.equal(c.course.classList.contains('hidden'), true); lock(false);
   }
 });
 
 test('position survives a new page controller, corrupt or solid-building positions fall back safely', () => {
   const c = campus(); c.move('ArrowRight', 20);
   const resumed = campus(Object.fromEntries(c.storage)); assert.deepEqual(resumed.point(), c.point());
-  for (const raw of ['not-json', '{"x":500,"y":135}', '{"x":-999,"y":900}', '{"x":"500","y":340}']) {
-    assert.deepEqual(campus({ 'playground-position-v1': raw }).point(), [500, 340]);
+  for (const raw of ['not-json', '{"x":500,"y":110}', '{"x":-999,"y":900}', '{"x":"500","y":580}']) {
+    assert.deepEqual(campus({ 'playground-position-v2': raw }).point(), [500, 580]);
   }
 });
 
 test('reduced motion keeps direct navigation and movement but removes walking animation', () => {
-  const c = campus({ 'playground-motion-v1': 'reduce' });
+  const c = campus({}, { systemReduced: true });
   assert.equal(c.root.classList.contains('pg-reduced-motion'), true);
   c.key('ArrowRight'); c.advance(10);
   assert.ok(c.point()[0] > 500); assert.equal(c.avatar.classList.contains('is-walking'), false);
-  c.release('ArrowRight'); c.context.playground.openDomain('data'); assert.equal(c.panel.open, true);
+  c.release('ArrowRight'); c.context.playground.openDomain('data'); assert.equal(c.course.classList.contains('hidden'), false);
 });
 
-test('OS motion reduction is explicit, and turning it off restores the saved choice', () => {
+test('OS motion reduction is automatic without an extra settings button', () => {
   const c = campus({ 'playground-motion-v1': 'normal' }, { systemReduced: true });
-  const control = c.root.querySelectorAll('.pg-motion')[0];
-  assert.equal(control.disabled, true); assert.match(control.textContent, /기기 설정/);
+  assert.equal(c.root.querySelectorAll('.pg-motion').length, 0);
   assert.equal(c.root.classList.contains('pg-reduced-motion'), true);
   c.systemMotion(false);
-  assert.equal(control.disabled, false); assert.equal(c.root.classList.contains('pg-reduced-motion'), false);
+  assert.equal(c.root.classList.contains('pg-reduced-motion'), false);
   c.systemMotion(true); assert.equal(c.root.classList.contains('pg-reduced-motion'), true);
 });
 
@@ -156,4 +159,28 @@ test('first arrival animation class is removed after its brief introduction', ()
   c.finishIntro(); assert.equal(c.root.classList.contains('pg-intro'), false);
   c.context.playground.leave(); assert.equal(c.root.classList.contains('pg-intro'), false);
   const resumed = campus(Object.fromEntries(c.storage)); assert.equal(resumed.root.classList.contains('pg-intro'), false);
+});
+
+test('full-page course returns to the same map position and keyboard focus', () => {
+  const c = campus(); c.move('ArrowRight', 12); const position = c.point();
+  c.context.playground.openDomain('data');
+  assert.equal(c.course.classList.contains('hidden'), false);
+  assert.equal(c.course.tagName, 'MAIN');
+  const back = c.course.querySelectorAll('.pg-course-back')[0]; back.dispatch('click');
+  assert.equal(c.root.classList.contains('hidden'), false);
+  assert.equal(c.course.classList.contains('hidden'), true);
+  assert.deepEqual(c.point(), position);
+  c.key('ArrowRight'); c.advance(3); c.release('ArrowRight');
+  assert.ok(c.point()[0] > position[0], 'returning immediately allows arrows again');
+});
+
+test('full-page activity actions use existing routes and obey locks', () => {
+  for (const id of ['unit1', 'unit2', 'unit3']) {
+    const c = campus(); c.context.playground.openDomain('algorithm');
+    const action = c.course.querySelectorAll('.pg-activity-links')[0].children.find(n => n.dataset.activity === id);
+    c.lock(true); action.dispatch('click'); assert.equal(c.context.lastUnit, undefined);
+    c.lock(false); action.dispatch('click'); assert.equal(c.context.lastUnit, id);
+    assert.equal(c.course.classList.contains('hidden'), true); assert.equal(c.frames.size, 0);
+  }
+  assert.deepEqual(campus({ 'playground-position-v1': '{"x":500,"y":340}' }).point(), [500, 580]);
 });

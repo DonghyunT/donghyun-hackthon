@@ -105,6 +105,31 @@ test('all five doors are reachable from the bottom entrance by arrows and Enter'
   }
 });
 
+test('touch direction pad moves immediately, dismisses its cue, and stops on release', () => {
+  const c = campus(), up = c.root.querySelectorAll('.dpad-up')[0];
+  const hint = c.root.querySelectorAll('.pg-first-hint')[0];
+  let prevented = false;
+  up.dispatch('pointerdown', { pointerId: 1, preventDefault() { prevented = true; } });
+  c.advance(5); up.dispatch('pointerup', { pointerId: 1 });
+  assert.equal(prevented, true); assert.ok(c.point()[1] < 570);
+  assert.equal(hint.isConnected, false); assert.equal(c.storage.get('playground-moved-v1'), '1');
+  const stopped = c.point(); c.advance(10); assert.deepEqual(c.point(), stopped); assert.equal(c.frames.size, 0);
+});
+
+test('direction pad keyboard activation shares movement and respects assessment lock', () => {
+  const c = campus(), right = c.root.querySelectorAll('.dpad-right')[0];
+  right.dispatch('click', { detail: 0 }); assert.ok(c.point()[0] > 500);
+  const moved = c.point(); c.lock(true); right.dispatch('click', { detail: 0 });
+  assert.deepEqual(c.point(), moved);
+});
+
+test('direction pad pointer cancellation cannot leave movement running', () => {
+  const c = campus(), left = c.root.querySelectorAll('.dpad-left')[0];
+  left.dispatch('pointerdown', { pointerId: 2, preventDefault() {} }); c.advance(3);
+  left.dispatch('pointercancel', { pointerId: 2 }); const cancelled = c.point();
+  c.advance(10); assert.deepEqual(c.point(), cancelled); assert.equal(c.frames.size, 0);
+});
+
 test('building collisions and outer borders stop movement while release leaves no loop', () => {
   const c = campus(); c.move('ArrowUp', 200);
   assert.ok(c.point()[1] > 140 && c.point()[1] < 210, 'stops in front of algorithm building');

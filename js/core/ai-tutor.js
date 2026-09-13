@@ -11,7 +11,7 @@
       const win = document.getElementById('tutor-chat-window');
       const fab = document.getElementById('tutor-fab-btn');
       isTutorOpen = !isTutorOpen;
-      
+
       if (fab) {
         fab.setAttribute('aria-expanded', isTutorOpen.toString());
         fab.setAttribute('aria-label', isTutorOpen ? 'AI 튜터 닫기' : 'AI 튜터 열기');
@@ -20,7 +20,7 @@
         if (icon) icon.className = isTutorOpen ? 'fa-solid fa-xmark text-lg' : 'fa-solid fa-comment-dots text-lg';
         if (text) text.textContent = isTutorOpen ? '닫기' : 'AI 튜터';
       }
-      
+
       if (isTutorOpen) {
         win.classList.remove('hidden');
         if (fab) fab.classList.add('chat-open');

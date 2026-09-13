@@ -2354,7 +2354,8 @@
     </div>
 
     <!-- 챗봇 피커부 탭 토글 버튼 (우측 벽면 반숨김 ➔ 호버/클릭 시 쇽 튀어나옴) -->
-    <button onclick="toggleTutorChat()" id="tutor-fab-btn" class="chatbot-peek-tab pointer-events-auto" title="AI 학습 도우미 열기">
+    <button onclick="toggleTutorChat()" id="tutor-fab-btn" class="chatbot-peek-tab pointer-events-auto" title="AI 학습 도우미 열기"
+            aria-label="AI 튜터 열기" aria-controls="tutor-chat-window" aria-expanded="false">
       <i class="fa-solid fa-comment-dots text-lg"></i>
       <span class="text-xs font-black tracking-tight select-none">AI 튜터</span>
     </button>

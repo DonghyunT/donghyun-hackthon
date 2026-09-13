@@ -80,7 +80,7 @@ const UNIT_META = {
 
 function hideMainViews() {
   window.playground?.leave();
-  ['view-portal', 'view-roadmap', 'view-unit-overview', 'view-records', 'view-concept', 'view-quiz', 'view-lab', 'view-classroom', 'view-eval']
+  ['view-course', 'view-demo', 'view-portal', 'view-roadmap', 'view-unit-overview', 'view-records', 'view-concept', 'view-quiz', 'view-lab', 'view-classroom', 'view-eval']
     .forEach(id => document.getElementById(id)?.classList.add('hidden'));
 }
 

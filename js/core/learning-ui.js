@@ -25,6 +25,7 @@
         };
       }
       $('login-status').textContent=message;$('login-tab-student').click();$('login-status').textContent=message;
+      root.demoClassroom?.attachLogin(dialog);
       if(!dialog.open)dialog.showModal();
     },
     openTeacherLogin(){

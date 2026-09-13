@@ -1,6 +1,6 @@
 // Administrative deployment helper. Credentials stay in the Firebase CLI credential store.
 const path=require('node:path');
-const PROJECT='donghyun-algo';
+const PROJECT='donghyun-hackthon';
 async function adminToken(){
   const base=process.env.FIREBASE_TOOLS_LIB;
   if(!base)throw Error('Set FIREBASE_TOOLS_LIB to the installed firebase-tools/lib directory.');

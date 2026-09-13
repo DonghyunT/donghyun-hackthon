@@ -50,7 +50,22 @@ service cloud.firestore {
             && p.discardedInformation is list && p.discardedInformation.size() <= 50;
         }
         allow read: if teacher() || own();
-        allow create: if own() && submissionId.size() == 36 && validSnapshot();
+        function validActivitySnapshot() {
+          let d=request.resource.data;
+          return d.keys().hasOnly(['schemaVersion','unitKey','activityKind','activityId','contentVersion','quiz','practice','ownerUid','classId','studentNum','submittedAt'])
+            && d.schemaVersion == 2 && d.unitKey in ['abstraction','algorithm','flowchart']
+            && d.activityKind in ['quiz','practice'] && d.activityId == d.unitKey+'-'+d.activityKind && d.contentVersion == d.unitKey+'-v1'
+            && d.ownerUid == request.auth.uid && d.classId == classId && d.studentNum == int(studentNum) && d.submittedAt == request.time
+            && ((d.activityKind == 'quiz' && d.practice == null
+                 && d.quiz is map && d.quiz.keys().hasOnly(['answers']) && d.quiz.answers is list && d.quiz.answers.size() == 4
+                 && answer(d.quiz.answers[0],1) && answer(d.quiz.answers[1],2) && answer(d.quiz.answers[2],3) && answer(d.quiz.answers[3],4))
+                || (d.activityKind == 'practice' && d.quiz == null && d.practice is map && d.practice.keys().hasOnly(['stage','contentJson'])
+                    && d.practice.contentJson is string && d.practice.contentJson.size() <= 100000
+                    && ((d.unitKey == 'abstraction' && d.practice.stage in ['tutorial','workspace'])
+                        || (d.unitKey == 'algorithm' && d.practice.stage == 'sandwich')
+                        || (d.unitKey == 'flowchart' && d.practice.stage in ['step-1','step-2','step-3','step-4','step-5']))));
+        }
+        allow create: if own() && submissionId.size() == 36 && (validSnapshot() || validActivitySnapshot());
         allow update, delete: if false;
       }
       }

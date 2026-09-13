@@ -3,7 +3,7 @@
   const classes=()=>Array.from({length:11},(_,i)=>`<option value="2-${i+1}">2학년 ${i+1}반</option>`).join('');
   const ui={
     intent:null,generation:0,teacherGeneration:0,
-    status(text){$('learning-status').textContent=text;if(text)$('learning-status').scrollIntoView({block:'nearest',behavior:'smooth'});},
+    status(text,persistent=false){clearTimeout(this.statusTimer);$('learning-status').textContent=text;if(text&&!persistent)this.statusTimer=setTimeout(()=>{$('learning-status').textContent='';},4500);},
     openLogin(message='',intent=null){
       if(isAssessmentLocked())return;
       this.intent=intent;closeMegaMenu();
@@ -63,51 +63,56 @@
         if(!profile){
           content.innerHTML='<p>학생으로 로그인하면 내 기록을 볼 수 있어요.</p><button class="learning-primary" onclick="learningUI.openLogin()">로그인</button>';return;
         }
-        const title=document.createElement('p');title.textContent=`${profile.classId} · ${profile.studentNum}번 ${profile.name}의 제출 기록`;content.append(title);
-        const action=document.createElement('button');action.className='learning-primary';action.textContent=root.learningRecords.pending?'이전 제출 다시 시도':'문제 추상화 퀴즈·실습 제출';action.onclick=()=>this.submit();content.append(action);
-        const hint=document.createElement('p');hint.className='learning-muted';hint.textContent='틀린 답이나 작성 중인 내용도 제출할 수 있어요. 제출 시점마다 기록을 남겨요.';content.append(hint);
+        content.innerHTML='<div class="records-intro"><p id="records-owner"></p><p class="learning-muted">각 단원의 퀴즈·실습에서 ‘내 기록에 저장’을 눌러 남긴 내용이에요.</p></div><div id="record-unit-filters" class="record-filters" aria-label="단원 필터"></div><div id="record-retry-area"></div><p class="learning-muted">최근 30개 기록 · 활동할 때마다 새로운 기록으로 남아요.</p><div id="record-list"></div>';
+        $('records-owner').textContent='2학년 '+profile.classId.split('-')[1]+'반 '+profile.studentNum+'번';
+        if(root.learningRecords.pending){const retry=document.createElement('button');retry.className='learning-secondary';retry.textContent='이전 저장 다시 시도';retry.onclick=()=>this.saveSnapshot(null);$('record-retry-area').append(retry);}
         const records=await root.learningRecords.list(profile);if(generation!==this.generation)return;
-        if(!records.length){const empty=document.createElement('p');empty.textContent='아직 제출한 기록이 없어요. 수업 활동 후 첫 기록을 남겨 보세요.';content.append(empty);}
-        records.forEach(record=>content.append(this.recordCard(record)));
+        const render=filter=>{
+          $('record-unit-filters').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.unit===filter)));
+          const list=$('record-list');list.replaceChildren();const shown=records.filter(r=>filter==='all'||r.unitKey===filter);
+          if(!shown.length){const empty=document.createElement('div');empty.className='record-empty';empty.innerHTML='<h3>아직 남긴 기록이 없어요</h3><p>수업에서 퀴즈를 풀거나 직접 만들어 본 내용을 저장해 보세요.</p><button class="learning-secondary" onclick="switchUnit(\'roadmap\')">수업 둘러보기</button>';list.append(empty);}
+          shown.forEach(record=>list.append(this.recordCard(record)));
+        };
+        for(const [key,name] of Object.entries({all:'전체',...root.learningRecordView.names})){const button=document.createElement('button');button.dataset.unit=key;button.textContent=name;button.onclick=()=>render(key);$('record-unit-filters').append(button);}
+        render('all');
       }catch(error){if(generation!==this.generation)return;content.replaceChildren();const p=document.createElement('p');p.textContent=error.message;content.append(p);const retry=document.createElement('button');retry.textContent='다시 확인';retry.className='learning-secondary';retry.onclick=()=>this.renderRecords();content.append(retry);}
     },
     async login(form){
       const button=form.querySelector('button');button.disabled=true;button.textContent='입장 확인 중…';
       try{
         await root.learningAuth.signIn({classId:$('learning-class').value,studentNum:$('learning-num').value,entryCode:$('learning-code').value});
-        $('learning-code').value='';$('login-dialog').close();await this.refreshIdentity();this.status('학생 로그인이 완료됐어요.');
+        $('learning-code').value='';$('login-dialog').close();await this.refreshIdentity();this.status('');
         const intent=this.intent;this.intent=null;
         if(intent==='eval'){switchUnit('eval');return;}
-        if(intent==='submit')await this.submit();
+        if(intent?.type==='save'){await this.saveSnapshot(intent.snapshot);return;}
         await root.classroomPortal.open();
       }catch(error){$('login-status').textContent=error.message;}
       finally{if($('learning-code'))$('learning-code').value='';button.disabled=false;button.textContent='학생으로 입장';}
     },
-    async submit(){
-      if(root.learningRecords.busy)return;
+    async submit(unitKey=null,kind=null){
+      if(this.saving||root.learningRecords.busy)return;
+      try{
+        unitKey=unitKey||({unit1:'abstraction',unit2:'algorithm',unit3:'flowchart'})[currentActiveUnit];
+        kind=kind||(currentUnitSubStep[currentActiveUnit]==='quiz'?'quiz':'practice');
+        const snapshot=root.learningCapture.capture(unitKey,kind);
+        await this.saveSnapshot(snapshot);
+      }catch(error){this.status(error.message,true);}
+    },
+    async saveSnapshot(snapshot){
+      if(this.saving||root.learningRecords.busy)return;
+      this.saving=true;
       try{
         const profile=await root.learningAuth.getCurrentStudent();
-        if(!profile){this.openLogin('제출하려면 먼저 학생으로 입장해 주세요.','submit');return;}
-        this.status('제출 중… 창을 닫지 마세요.');
-        await root.learningRecords.submit();this.status('수업에 제출했어요. 나의 기록에서 확인할 수 있어요.');
+        if(!profile){this.openLogin('기록을 저장하려면 학생으로 로그인해 주세요.',{type:'save',snapshot});return;}
+        this.status('저장 중… 창을 닫지 마세요.',true);
+        document.querySelectorAll('[data-record-save]').forEach(b=>b.disabled=true);
+        await root.learningRecords.submit(snapshot);
+        this.status('내 기록에 저장했어요. 클래스룸에서 확인할 수 있어요.');
         if(currentActiveUnit==='records')await this.renderRecords();
-      }catch(error){this.status('제출하지 못했어요. '+error.message+' 제출 버튼을 눌러 다시 시도할 수 있어요.');}
+      }catch(error){this.status('저장하지 못했어요. '+error.message+' 나의 기록에서 다시 시도할 수 있어요.',true);}
+      finally{this.saving=false;document.querySelectorAll('[data-record-save]').forEach(b=>b.disabled=false);}
     },
-    recordCard(record){
-      const details=document.createElement('details');details.className='learning-record';
-      const summary=document.createElement('summary'), date=record.submittedAt?.toDate?.();
-      const answers=record.quiz?.answers||[],answered=answers.filter(a=>a.choiceIndex!==null).length;
-      const correct=record.contentVersion==='abstraction-v1'?answers.filter(a=>UNIT_QUIZ_DATA.abstraction.questions.find(q=>q.id===a.questionId)?.options[a.choiceIndex]?.correct===true).length:null;
-      summary.textContent=`제출 완료 · 문제 추상화 · ${date?date.toLocaleString('ko-KR'):'저장 시각 확인 중'}`;details.append(summary);
-      const stats=document.createElement('p');stats.className='learning-muted';stats.textContent=`퀴즈 ${answered}/4 응답${correct===null?'':` · 정답률 ${Math.round(correct/4*100)}% (${correct}/4)`} — 학습 참고용이며 제출 완료 여부와 별개예요.`;details.append(stats);
-      const p=record.practice||{};
-      const body=document.createElement('pre');body.className='learning-original';body.textContent=[
-        '퀴즈 답안',...answers.map(a=>`${a.questionId}번: ${a.choiceIndex===null?'미응답':String(a.choiceIndex+1)+'번째 보기'}`),
-        '',`현재 상태: ${p.currentState||'(미작성)'}`,`목표 상태: ${p.goalState||'(미작성)'}`,
-        `조건: ${(p.conditions||[]).join(' / ')||'(미작성)'}`,`작성 중인 조건: ${p.conditionDraft||'(없음)'}`,
-        `남긴 정보: ${(p.keptInformation||[]).join(' / ')||'(없음)'}`,`버린 정보: ${(p.discardedInformation||[]).join(' / ')||'(없음)'}`
-      ].join('\n');details.append(body);return details;
-    },
+    recordCard(record){return root.learningRecordView.card(record);},
     async renderTeacher(){
       const generation=++this.teacherGeneration,container=$('classroom-table-container'),classId=getClassIdFromSelected();
       container.innerHTML=`<div class="learning-teacher"><details class="learning-record"><summary>추가 계정 발급</summary><p class="learning-muted">기존 308명은 발급되어 있습니다. 등록되지 않은 번호에만 새 계정을 만들 수 있습니다. 기존 학생의 비밀번호는 배부 자료에서 확인하세요.</p><form id="student-provision-form" class="learning-form"><div class="learning-fields"><label>번호<input name="studentNum" type="number" min="1" max="28" required></label><label>이름 (선택)<input name="name" maxlength="40" autocomplete="off"></label></div><button class="learning-primary" type="submit">비밀번호 발급</button><button id="provision-retry" class="learning-secondary" type="button" hidden>명부 저장 재시도</button></form><p id="provision-result" role="status" class="learning-code-result"></p></details><h3>학생별 학습 기록</h3><p id="teacher-record-status" role="status">불러오는 중…</p><div id="teacher-learning-list"></div></div>`;

@@ -17,6 +17,7 @@
 
     let globalExecutionQueue = [];
     let validStudentPromptsLog = [];
+    let studentCommandAttempts = [];
     let sandwichRunGeneration = 0;
     const sandwichTimers = new Set();
     function scheduleSandwich(callback, delay) {
@@ -868,6 +869,8 @@
       if (!text) return;
 
       appendChat('user', text);
+      const recordAttempt={text,interpretedActions:[],status:'해석 중'};
+      studentCommandAttempts.push(recordAttempt);
       input.value = '';
       sendBtn.disabled = true;
       sendBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i>';
@@ -883,6 +886,7 @@
       sendBtn.innerText = "실행";
 
       if (!parsedResult) {
+        recordAttempt.status='해석하지 못함';
         appendChat('bot', "명령에서 실행 가능한 동작을 추출하지 못했습니다. (예: 빵 봉지 열기, 잼 바르기 등 구체적인 동작을 내려주세요)", 'clarify');
         robotSub.textContent = "명령 해석 불가";
         avatar.textContent = "😵";
@@ -891,6 +895,7 @@
       }
 
       if (parsedResult.type === 'CLARIFY') {
+        recordAttempt.status='구체적인 지시가 필요함';
         appendChat('bot', parsedResult.clarify_message || "로봇은 '알아서'라는 명령을 이해할 수 없습니다. 무엇을 먼저 해야 할지 구체적으로 알려주세요!", 'clarify');
         robotSub.textContent = "구체적인 지시가 필요합니다.";
         avatar.textContent = "❓";
@@ -902,6 +907,7 @@
 
       const actions = parsedResult.actions || [];
       if (actions.length === 0) {
+        recordAttempt.status='실행 가능한 동작 없음';
         appendChat('bot', "실행 가능한 동작을 찾지 못했습니다. 구체적인 행동을 지시해주세요.", 'clarify');
         robotSub.textContent = "명령 해석 불가";
         avatar.textContent = "😵";
@@ -910,6 +916,7 @@
       }
 
       appendChat('bot', actions.join(" ➔ "), 'ai_plan');
+      recordAttempt.status='동작으로 해석됨';recordAttempt.interpretedActions=[...actions];
 
       validStudentPromptsLog.push({
         userText: text,
@@ -971,6 +978,7 @@
       };
       globalExecutionQueue = [];
       validStudentPromptsLog = [];
+      studentCommandAttempts = [];
 
       document.getElementById('btn-reopen-summary').classList.add('hidden');
 

@@ -5,7 +5,7 @@ class EvalService {
     this.listeners = new Set();
     this.channel?.addEventListener('message', event => {
       const message = event.data;
-      if (!message || !this.isDemo() || !/^2-(?:[1-9]|10|11)$/.test(message.classId)) return;
+      if (!message || !this.isDemo() || !/^2-(?:[1-9]|10|11|12)$/.test(message.classId)) return;
       if (message.type === 'snapshot-request') {
         this.channel.postMessage({ type: 'snapshot', classId: message.classId, session: this.read('EVAL_SESSION_' + message.classId, null), students: this.read('EVAL_STUDENTS_' + message.classId, []) });
         return;
@@ -26,7 +26,7 @@ class EvalService {
   read(key, fallback) { try { return JSON.parse(sessionStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
   write(key, value) { sessionStorage.setItem(key, JSON.stringify(value)); }
   identity(classId, num) {
-    if (!/^2-(?:[1-9]|10|11)$/.test(classId) || !Number.isInteger(Number(num)) || Number(num) < 1 || Number(num) > 28) throw new Error('학급과 번호를 확인해 주세요.');
+    if (!/^2-(?:[1-9]|10|11|12)$/.test(classId) || !Number.isInteger(Number(num)) || Number(num) < 1 || Number(num) > 28) throw new Error('학급과 번호를 확인해 주세요.');
     return String(Number(num)).padStart(2, '0');
   }
   defaultSession(classId) { return { classId, questionVersion:3, status: 'waiting', durationMinutes: 30, startTime: null, maxStudents: 28 }; }

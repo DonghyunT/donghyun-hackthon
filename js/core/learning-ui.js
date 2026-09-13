@@ -18,10 +18,12 @@
         for(const role of ['student','teacher'])$('login-tab-'+role).onclick=()=>{for(const other of ['student','teacher']){$('login-'+other+'-panel').hidden=other!==role;$('login-tab-'+other).setAttribute('aria-pressed',String(other===role));}$('login-status').textContent='';};
         $('login-emergency').onclick=()=>{dialog.close();this.openTeacherLogin();};
         $('login-google').onclick=async()=>{
+          if(root.learningAuth.busy)return;
+          root.learningAuth.busy=true;
           const button=$('login-google');button.disabled=true;$('login-status').textContent='교사 계정을 확인하고 있습니다…';
           try{await root.authService.teacher();dialog.close();await root.classroomPortal.open();}
           catch(error){$('login-status').textContent=error.message;await root.classroomPortal.refreshHeader().catch(()=>{});}
-          finally{button.disabled=false;}
+          finally{button.disabled=false;root.learningAuth.busy=false;}
         };
       }
       $('login-status').textContent=message;$('login-tab-student').click();$('login-status').textContent=message;
@@ -49,6 +51,9 @@
         const profile=await root.learningAuth.getCurrentStudent();
         await root.classroomPortal?.refreshHeader();
         if(profile){
+          if(profile.classId==='2-12'&&!$('eval-st-class').querySelector('option[value="2-12"]')){
+            const option=document.createElement('option');option.value='2-12';option.textContent='발표용 학급';$('eval-st-class').append(option);
+          }
           $('eval-st-class').value=profile.classId;$('eval-st-num').value=profile.studentNum;$('eval-st-name').value=profile.name;
         }
         if(!root.authService.isDemo())for(const id of ['eval-st-class','eval-st-num','eval-st-name'])$(id).disabled=true;
@@ -65,7 +70,7 @@
           content.innerHTML='<p>학생으로 로그인하면 내 기록을 볼 수 있어요.</p><button class="learning-primary" onclick="learningUI.openLogin()">로그인</button>';return;
         }
         content.innerHTML='<div class="records-intro"><p id="records-owner"></p><p class="learning-muted">각 단원의 퀴즈·실습에서 ‘내 기록에 저장’을 눌러 남긴 내용이에요.</p></div><div id="record-unit-filters" class="record-filters" aria-label="단원 필터"></div><div id="record-retry-area"></div><p class="learning-muted">최근 30개 기록 · 활동할 때마다 새로운 기록으로 남아요.</p><div id="record-list"></div>';
-        $('records-owner').textContent='2학년 '+profile.classId.split('-')[1]+'반 '+profile.studentNum+'번';
+        $('records-owner').textContent=profile.classId==='2-12'?'발표용 학급 · 게스트 학생':'2학년 '+profile.classId.split('-')[1]+'반 '+profile.studentNum+'번';
         if(root.learningRecords.pending){const retry=document.createElement('button');retry.className='learning-secondary';retry.textContent='이전 저장 다시 시도';retry.onclick=()=>this.saveSnapshot(null);$('record-retry-area').append(retry);}
         const records=await root.learningRecords.list(profile);if(generation!==this.generation)return;
         const render=filter=>{
@@ -118,10 +123,12 @@
       const generation=++this.teacherGeneration,container=$('classroom-table-container'),classId=getClassIdFromSelected();
       container.innerHTML=`<div class="learning-teacher"><details class="learning-record"><summary>추가 계정 발급</summary><p class="learning-muted">기존 308명은 발급되어 있습니다. 등록되지 않은 번호에만 새 계정을 만들 수 있습니다. 기존 학생의 비밀번호는 배부 자료에서 확인하세요.</p><form id="student-provision-form" class="learning-form"><div class="learning-fields"><label>번호<input name="studentNum" type="number" min="1" max="28" required></label><label>이름 (선택)<input name="name" maxlength="40" autocomplete="off"></label></div><button class="learning-primary" type="submit">비밀번호 발급</button><button id="provision-retry" class="learning-secondary" type="button" hidden>명부 저장 재시도</button></form><p id="provision-result" role="status" class="learning-code-result"></p></details><h3>학생별 학습 기록</h3><p id="teacher-record-status" role="status">불러오는 중…</p><div id="teacher-learning-list"></div></div>`;
       $('provision-retry').hidden=!root.learningAuth.pendingProvision;
+      $('student-provision-form').closest('details').hidden=!!root.authService.teacherProfile?.classIds;
       $('student-provision-form').onsubmit=event=>{event.preventDefault();const data=new FormData(event.currentTarget);this.provision({classId,studentNum:data.get('studentNum'),name:data.get('name')});};
       $('provision-retry').onclick=()=>this.provision(null);
       try{
         await root.authService.teacher();
+        $('student-provision-form').closest('details').hidden=!!root.authService.teacherProfile?.classIds;
         if(root.authService.isDemo()){$('teacher-record-status').textContent='로컬 시연입니다. 계정 발급과 서버 기록은 운영 연결에서 확인하세요.';return;}
         const profiles=await root.firebaseDb.collection('learning_classes').doc(classId).collection('students').get({source:'server'});
         if(generation!==this.teacherGeneration)return;

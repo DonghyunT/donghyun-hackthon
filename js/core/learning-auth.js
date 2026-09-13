@@ -1,7 +1,7 @@
 /* One SESSION identity for student lessons and assessments. Teacher provisioning uses a separate in-memory app. */
 (function (root) {
   function identity(classId, studentNum) {
-    if (!/^2-(?:[1-9]|10|11)$/.test(classId) || !/^(?:[1-9]|1[0-9]|2[0-8])$/.test(String(studentNum))) throw Error('학급과 번호를 확인해 주세요.');
+    if (!/^2-(?:[1-9]|10|11|12)$/.test(classId) || !/^(?:[1-9]|1[0-9]|2[0-8])$/.test(String(studentNum))) throw Error('학급과 번호를 확인해 주세요.');
     return { classId, studentNum: Number(studentNum), email: `s-${classId}-${Number(studentNum)}@students.donghyun-hackthon.invalid` };
   }
   function matches(user, profile) {
@@ -27,7 +27,7 @@
       if (root.authService.isDemo()) return this.demoProfile || null;
       const auth=await root.authService.ready(), user=auth.currentUser;
       if (!user || user.isAnonymous) return null;
-      const login=/^s-(2-(?:[1-9]|10|11))-([1-9]|1[0-9]|2[0-8])@students\.donghyun-hackthon\.invalid$/.exec(user.email||'');
+      const login=/^s-(2-(?:[1-9]|10|11|12))-([1-9]|1[0-9]|2[0-8])@students\.donghyun-hackthon\.invalid$/.exec(user.email||'');
       if(!login)return null;
       const doc=await this.profileRef({classId:login[1],studentNum:Number(login[2])}).get({source:'server'});
       if (auth.currentUser?.uid!==user.uid) throw Error('로그인이 바뀌었어요. 다시 확인해 주세요.');
@@ -59,6 +59,36 @@
       if(!profile)throw Error('먼저 학생 로그인을 해 주세요.');
       return profile;
     },
+    async signInGuest(role) {
+      if(!['student','teacher'].includes(role))throw Error('학생 또는 교사 게스트를 선택해 주세요.');
+      if(this.busy)throw Error('로그인을 확인하고 있어요. 잠시 기다려 주세요.');
+      if(this.isLocked())throw Error('평가에 참여 중에는 계정을 바꿀 수 없어요.');
+      if(root.authService.isDemo())throw Error('실제 게스트 로그인은 서버가 연결된 환경에서 사용할 수 있습니다.');
+      this.busy=true;let auth,signedIn=false;
+      const controller=new root.AbortController(),timeout=root.setTimeout(()=>controller.abort(),20000);
+      try {
+        auth=await root.authService.ready();
+        if(auth.currentUser&&!auth.currentUser.isAnonymous)throw Error('먼저 로그아웃 · 사용 종료를 눌러 주세요. 현재 계정은 유지됩니다.');
+        const response=await root.fetch('/api/guest-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role}),signal:controller.signal,credentials:'same-origin',cache:'no-store'});
+        const body=await response.json().catch(()=>({}));
+        if(!response.ok)throw Error(response.status===503?'게스트 로그인 서버가 아직 준비되지 않았습니다. 준비가 끝난 뒤 다시 이용해 주세요.':response.status===429?'로그인 요청이 많습니다. 잠시 후 다시 시도해 주세요.':'게스트 로그인 정보를 받을 수 없습니다. 다시 시도해 주세요.');
+        if(typeof body.customToken!=='string'||!body.customToken||body.customToken.length>10000)throw Error('게스트 로그인 응답을 확인할 수 없습니다.');
+        if(this.isLocked() || (auth.currentUser&&!auth.currentUser.isAnonymous))throw Error('로그인 상태가 바뀌었습니다. 진행 중인 작업을 마친 뒤 다시 시도해 주세요.');
+        await auth.signInWithCustomToken(body.customToken);signedIn=true;
+        if(role==='student') {
+          const profile=await this.getCurrentStudent();
+          if(!profile||profile.uid!=='hackathon-guest-student'||profile.classId!=='2-12'||profile.studentNum!==1)throw Error('발표용 학생 등록 정보를 확인할 수 없습니다.');
+          return profile;
+        }
+        const user=await root.authService.teacher();
+        if(user.uid!=='hackathon-guest-teacher'||user.email!=='guest-teacher@teachers.donghyun-hackthon.invalid'||root.authService.teacherProfile?.classIds?.length!==1||root.authService.teacherProfile.classIds[0]!=='2-12')throw Error('발표용 교사 권한을 확인할 수 없습니다.');
+        return user;
+      } catch(error) {
+        if(signedIn){await auth.signOut();root.authService.teacherProfile=null;}
+        if(error?.name==='AbortError')throw Error('로그인 연결이 지연되고 있습니다. 다시 시도해 주세요.');
+        throw Error(message(error));
+      } finally {root.clearTimeout(timeout);this.busy=false;}
+    },
     async signInTeacher(password) {
       if(this.busy||this.isLocked())throw Error('진행 중인 작업을 마친 뒤 로그인해 주세요.');
       if(!password)throw Error('교사 비상계정 비밀번호를 입력해 주세요.');
@@ -80,6 +110,7 @@
       try {
         if(root.authService.isDemo())throw Error('로컬 시연에서는 실제 계정을 발급하지 않습니다.');
         await root.authService.teacher();
+        if(root.authService.teacherProfile?.classIds)throw Error('발표용 교사 계정에서는 학생 계정을 발급할 수 없습니다.');
         // Random per-student password. Never persist it in Firestore, browser storage, or logs.
         const entryCode=root.studentPassword.generate();
         app=root.firebase.initializeApp(root.FIREBASE_CONFIG,'provision-'+root.crypto.randomUUID());
@@ -103,6 +134,7 @@
       this.busy=true;
       try {
         await root.authService.teacher();
+        if(root.authService.teacherProfile?.classIds)throw Error('발표용 교사 계정에서는 학생 계정을 발급할 수 없습니다.');
         const p=this.pendingProvision;
         await this.profileRef(p.profile).set(p.profile);
         this.pendingProvision=null; return {...p.profile,entryCode:p.entryCode};

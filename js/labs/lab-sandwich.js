@@ -440,7 +440,7 @@
       const title = document.getElementById('modal-sandwich-title');
       const badge = document.getElementById('modal-success-badge');
       const review = document.getElementById('modal-chef-review');
-      const stepsContainer = document.getElementById('modal-algorithm-steps');
+      const stepsContainer = document.getElementById('modal-algorithm-steps') || document.getElementById('modal-algorithm-code');
       const stepCount = document.getElementById('modal-step-count');
 
       title.textContent = result.title;
@@ -453,9 +453,9 @@
       }
 
       review.innerHTML = `<strong>👨‍🍳 로봇 셰프의 시식평:</strong> ${result.review}`;
-      stepCount.textContent = `총 ${validStudentPromptsLog.length}단계 실행됨`;
+      if (stepCount) stepCount.textContent = `총 ${validStudentPromptsLog.length}단계 실행됨`;
 
-      stepsContainer.innerHTML = '';
+      if (stepsContainer) stepsContainer.innerHTML = '';
       validStudentPromptsLog.forEach((logItem, idx) => {
         const row = document.createElement('div');
         row.className = "p-3.5 rounded-2xl bg-slate-800/90 border border-slate-700 flex flex-col gap-1.5 shadow-xs";

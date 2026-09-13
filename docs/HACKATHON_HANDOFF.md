@@ -17,7 +17,7 @@
 - 저장소: https://github.com/DonghyunT/donghyun-hackthon
 - 기존 PC 경로: D:\hack_thon. 새 PC에서는 실제 경로를 확인한다.
 - 운영 브랜치: feature/hackathon (main이 아님).
-- 최근 확인한 운영 커밋: de13c7f68209ac4d390ececf3eda59e898befbcc.
+- 제품 코드 기준 커밋: de13c7f68209ac4d390ececf3eda59e898befbcc. 후속 문서 정리는 제품 코드를 변경하지 않는다. 최신 문서 병합 커밋은 origin/feature/hackathon의 Git 로그로 확인한다.
 - 주소: https://donghyun-hackthon.vercel.app/
 - Firebase: donghyun-hackthon. 기존 서비스·DB는 변경하지 않는다.
 - HTML/CSS/Vanilla JavaScript + Vercel 서버리스 API + Firebase. 프런트엔드 프레임워크로 전환하지 않는다.
@@ -61,8 +61,9 @@
 
 ## 현재 작업과 다음 행동
 
-- 사용자 승인으로 일회성 AI 문서 6개와 기존 서비스의 PC 인수인계 1개를 삭제했다. 문서 안내를 추가하고 개발 안내·PRD·README의 참조와 과거 상태를 정리했다. 앱 변경·운영 병합·새 운영 배포는 없다.
-- 문서 작업 브랜치: codex/portable-handoff. 시작 시 미추적 tools/update_index.cjs가 있었으며 실행하거나 커밋하지 않는다.
+- 사용자 승인으로 일회성 AI 문서 6개와 기존 서비스의 PC 인수인계 1개를 삭제했다. 문서 안내를 추가하고 개발 안내·PRD·README의 참조와 과거 상태를 정리했다. 제품 코드와 DB는 변경하지 않았다.
+- 문서 구현 커밋은 196ac75, 정리 커밋은 3cbf8db이며 작업 브랜치는 codex/portable-handoff이다. 2026-09-13 사용자가 이 문서 변경의 운영 병합·배포까지 승인했다. 병합 대상은 feature/hackathon이며 새 PC에서는 원격 Git 로그로 병합 여부를 확인한 뒤 최신 운영 브랜치를 기준으로 시작한다. 실제 배포 완료는 Vercel의 대상 커밋과 READY 상태를 별도로 확인한다.
+- 시작 시 미추적 tools/update_index.cjs가 있었으며 실행하거나 커밋하지 않는다.
 - 문서 정리 검증: 2026-09-13 작업본의 Markdown 문서 31개에서 문서 링크 114개를 확인해 누락 0개. 삭제 대상 참조 검색과 git diff --check 통과. 문서만 변경하여 앱 검사·브라우저 캡처는 실행하지 않았다.
 - 새 기능 작업은 아직 지정되지 않았다. 다음 세션에서 Git 상태와 이 문서를 확인하고 사용자가 지정한 작업을 진행한다. 백로그 전체를 자동으로 구현하지 않는다.
 - 새 세션 공통 프롬프트: [START_NEXT_SESSION.md](START_NEXT_SESSION.md).

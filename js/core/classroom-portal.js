@@ -1,6 +1,6 @@
 (function(root){
   const $=id=>document.getElementById(id);
-  const label=p=>`2학년 ${Number(p.classId.split('-')[1])}반 ${p.studentNum}번`;
+  const label=p=>p.classId==='2-12'?'발표용 학급 · 게스트 학생':`2학년 ${Number(p.classId.split('-')[1])}반 ${p.studentNum}번`;
   const ui={
     generation:0,unsubs:[],timer:null,
     stop(){this.generation++;this.unsubs.forEach(fn=>fn());this.unsubs=[];clearInterval(this.timer);},
@@ -12,14 +12,14 @@
       if(!user||user.isAnonymous)return {role:'guest'};
       const doc=await root.firebaseDb.collection('teachers').doc(user.uid).get({source:'server'});
       if(auth.currentUser?.uid!==user.uid)throw Error('로그인이 바뀌었습니다. 다시 확인해 주세요.');
-      return {role:doc.exists&&doc.data().enabled===true?'teacher':'unregistered'};
+      return {role:doc.exists&&doc.data().enabled===true?'teacher':'unregistered',profile:doc.exists?doc.data():null};
     },
     async refreshHeader(){
       try{
         const identity=await this.identity();this.current=identity;
         const signed=identity.role!=='guest';
         $('header-login-button').hidden=signed;$('account-menu').hidden=!signed;
-        $('account-label').textContent=identity.role==='student'?label(identity.profile):identity.role==='teacher'?'교사 계정':'권한 확인 필요';
+        $('account-label').textContent=identity.role==='student'?label(identity.profile):identity.role==='teacher'?(identity.profile?.classIds?.includes('2-12')?'발표용 교사':'교사 계정'):'권한 확인 필요';
         $('nav-btn-classroom').textContent=identity.role==='teacher'?'우리 반 클래스룸':'내 클래스룸';
         return identity;
       }catch(error){$('header-login-button').hidden=false;$('account-menu').hidden=true;throw error;}
@@ -47,6 +47,7 @@
       const content=$('portal-content');
       content.innerHTML='<p class="portal-eyebrow">내 클래스룸</p><h1 id="portal-student-title"></h1><p class="learning-muted">오늘 할 일을 확인하고, 생각하고 만든 기록을 모아 보세요.</p><div id="student-classroom-sections"><section id="portal-learning"><h2>수업과 내 기록</h2><p>틀린 답이나 작성 중인 내용도 기록으로 남길 수 있어요.</p><div class="learning-actions"><button class="learning-primary" onclick="switchUnit(\'roadmap\')">수업 둘러보기</button><button class="learning-secondary" onclick="switchUnit(\'records\')">내 기록 전체 보기</button></div><h3>최근 제출 기록</h3><div id="portal-recent">기록을 불러오는 중…</div></section><section id="portal-assessment"><p class="portal-eyebrow">현재 수행평가</p><h2 id="portal-assessment-title">평가 상태를 확인하고 있어요</h2><p id="portal-assessment-status" role="status"></p><button id="portal-assessment-enter" class="learning-primary" disabled>상태 확인 중</button><p class="learning-muted">이곳에서는 제출 여부를 확인할 수 있어요.</p></section></div>';
       $('portal-student-title').textContent=label(profile);
+      if(profile.classId==='2-12')content.querySelector('.learning-muted').textContent='공동으로 사용하는 발표용 계정입니다. 실제로 저장되므로 이름 등 개인정보는 입력하지 마세요.';
       $('portal-assessment-enter').onclick=()=>root.studentEvalApp.openLobby();
       let session=null,own=null,ownReady=false,sessionReady=false,failed=false;
       const render=()=>{
@@ -76,14 +77,17 @@
       }catch(error){if(generation===this.generation)$('portal-recent').textContent='기록을 불러오지 못했어요. '+error.message;}
     },
     async teacher(generation){
+      await root.authService.teacher();
       isTeacherAuthenticated=true;
-      const snapshot=await root.firebaseDb.collection('learning_classes').get({source:'server'});
+      const scope=root.authService.teacherProfile?.classIds;
+      const snapshot=Array.isArray(scope)?{docs:(await Promise.all(scope.map(id=>root.firebaseDb.collection('learning_classes').doc(id).get({source:'server'})))).filter(doc=>doc.exists)}:await root.firebaseDb.collection('learning_classes').get({source:'server'});
       if(generation!==this.generation)return;
       const content=$('portal-content');content.innerHTML='<p class="portal-eyebrow">교사 클래스룸</p><h1>우리 반</h1><p class="learning-muted">반을 선택하면 학생 기록과 수행평가 운영 화면으로 이동합니다.</p><div id="portal-classes" class="portal-class-grid"></div>';
+      if(Array.isArray(scope))content.querySelector('.learning-muted').textContent='발표용 학급에서 실제 기록과 평가 기능을 사용합니다. 공동 사용 데이터이므로 개인정보는 입력하지 마세요.';
       const docs=snapshot.docs.sort((a,b)=>Number(a.id.split('-')[1])-Number(b.id.split('-')[1]));
       if(!docs.length)$('portal-classes').textContent='등록된 학급이 없습니다.';
       for(const doc of docs){
-        if(!/^2-([1-9]|10|11)$/.test(doc.id))continue;
+        if(!/^2-([1-9]|10|11|12)$/.test(doc.id))continue;
         const button=document.createElement('button');button.className='portal-class';button.dataset.classId=doc.id;
         const title=document.createElement('strong');title.textContent=doc.data().label||`2학년 ${doc.id.split('-')[1]}반`;
         const hint=document.createElement('span');hint.textContent='학생 기록 · 수행평가';button.append(title,hint);
@@ -91,8 +95,8 @@
       }
     },
     async enterClass(classId){
-      if(teacherSessionPending||isAssessmentLocked()||!/^2-([1-9]|10|11)$/.test(classId))return;
-      try{await root.authService.teacher();if(currentActiveUnit!=='portal')return;this.stop();currentSelectedClass=`2학년 ${Number(classId.split('-')[1])}반`;currentClassroomTab='assignments';showClassroomView();}
+      if(teacherSessionPending||isAssessmentLocked()||!/^2-([1-9]|10|11|12)$/.test(classId))return;
+      try{await root.authService.teacher();if(!root.authService.teacherCanAccess(classId))throw Error('접근할 수 없는 학급입니다.');if(currentActiveUnit!=='portal')return;this.stop();currentSelectedClass=`2학년 ${Number(classId.split('-')[1])}반`;currentClassroomTab='assignments';showClassroomView();}
       catch(error){root.learningUI.status(error.message);}
     }
   };

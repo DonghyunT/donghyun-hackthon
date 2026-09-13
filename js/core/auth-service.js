@@ -1,6 +1,11 @@
 /* Shared-PC authentication. Roles are granted by an administrator, never by the browser. */
 window.authService = {
   pending: null,
+  teacherProfile: null,
+  teacherCanAccess(classId) {
+    const profile=this.teacherProfile;
+    return !!profile && profile.enabled===true && (!Array.isArray(profile.classIds) || profile.classIds.includes(classId));
+  },
   isDemo() {
     return ['localhost', '127.0.0.1'].includes(location.hostname) &&
       new URLSearchParams(location.search).get('demo') === '1';
@@ -30,10 +35,16 @@ window.authService = {
     const auth = await this.ready();
     let user = auth.currentUser;
     if (window.learningAuth?.isLocked()) throw new Error('평가에 참여 중에는 교사 계정으로 전환할 수 없습니다.');
-    if (user && !user.isAnonymous && !user.providerData?.some(p=>p.providerId==='google.com') && user.email!=='teacher@teachers.donghyun-hackthon.invalid') throw new Error('학생 계정으로 로그인되어 있습니다. 로그아웃 · 사용 종료 후 교사용으로 입장해 주세요.');
+    if (user && !user.isAnonymous && !user.providerData?.some(p=>p.providerId==='google.com') && !['teacher@teachers.donghyun-hackthon.invalid','guest-teacher@teachers.donghyun-hackthon.invalid'].includes(user.email)) throw new Error('학생 계정으로 로그인되어 있습니다. 로그아웃 · 사용 종료 후 교사용으로 입장해 주세요.');
     if (!user || user.isAnonymous) user = (await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())).user;
-    const role = await firebase.firestore().collection('teachers').doc(user.uid).get();
+    this.teacherProfile=null;
+    const role = await firebase.firestore().collection('teachers').doc(user.uid).get({source:'server'});
+    if(auth.currentUser?.uid!==user.uid)throw new Error('로그인이 바뀌었습니다. 다시 확인해 주세요.');
     if (!role.exists || role.data().enabled !== true) throw new Error('이 Google 계정에는 교사 권한이 없습니다. 관리자에게 계정 등록을 요청해 주세요.');
+    const profile=role.data();
+    if('classIds' in profile && (!Array.isArray(profile.classIds) || !profile.classIds.length || profile.classIds.some(id=>typeof id!=='string'||!/^2-(?:[1-9]|10|11|12)$/.test(id))))throw new Error('교사의 학급 접근 범위가 올바르지 않습니다.');
+    if(user.email==='guest-teacher@teachers.donghyun-hackthon.invalid' && (!Array.isArray(profile.classIds)||profile.classIds.length!==1||profile.classIds[0]!=='2-12'))throw new Error('발표용 교사 계정의 학급 범위를 확인해 주세요.');
+    this.teacherProfile={...profile,uid:user.uid};
     return user;
   },
   async token() {
@@ -44,6 +55,7 @@ window.authService = {
     const auth = await this.ready();
     if (auth) await auth.signOut();
     this.pending = null;
+    this.teacherProfile = null;
   }
 };
 

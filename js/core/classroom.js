@@ -19,6 +19,12 @@ const DEFAULT_CLASSES = [
   "2학년 9반", "2학년 10반", "2학년 11반"
 ];
 
+function availableClassroomClasses() {
+  const scope=window.authService?.teacherProfile?.classIds;
+  return Array.isArray(scope)?scope.map(id=>`2학년 ${Number(id.split('-')[1])}반`):DEFAULT_CLASSES.concat('2학년 12반');
+}
+function classroomClassLabel(name) { return name==='2학년 12반'?'발표용 학급':name; }
+
 let currentSelectedClass = "2학년 1반";
 let currentClassroomTab = "live_eval"; // 기본을 '실시간 수행평가 관제실'로 설정
 let isTeacherAuthenticated = false;
@@ -65,6 +71,9 @@ async function promptTeacherPin() {
 
 function showClassroomView() {
   if(isAssessmentLocked())return;
+  const available=availableClassroomClasses();
+  if(!available.includes(currentSelectedClass))currentSelectedClass=available[0];
+  if(!currentSelectedClass)return;
   document.body.classList.remove('reading-mode');
   if (typeof disableStudioMode === "function") disableStudioMode();
   // 모든 메인 뷰 숨기고 view-classroom 단독 노출
@@ -118,9 +127,9 @@ function switchClassroomSubTab(tabName) {
 }
 
 function switchClassroomClass(className) {
-  if(teacherSessionPending||!DEFAULT_CLASSES.includes(className))return;
+  if(teacherSessionPending||!availableClassroomClasses().includes(className))return;
   currentSelectedClass = className;
-  document.getElementById('teacher-classroom-title').textContent=className+' 클래스룸';
+  document.getElementById('teacher-classroom-title').textContent=classroomClassLabel(className)+' 클래스룸';
   if (currentClassroomTab === 'live_eval') {
     initLiveEvalDashboard();
   } else {
@@ -132,12 +141,12 @@ function switchClassroomClass(className) {
 function renderClassroomDashboard() {
   const classSelect = document.getElementById('classroom-class-select');
   if (classSelect) {
-    classSelect.innerHTML = DEFAULT_CLASSES.map(c => `
-      <option value="${c}" ${c === currentSelectedClass ? 'selected' : ''}>${c}</option>
+    classSelect.innerHTML = availableClassroomClasses().map(c => `
+      <option value="${c}" ${c === currentSelectedClass ? 'selected' : ''}>${classroomClassLabel(c)}</option>
     `).join('');
   }
 
-  document.getElementById('teacher-classroom-title').textContent=currentSelectedClass+' 클래스룸';
+  document.getElementById('teacher-classroom-title').textContent=classroomClassLabel(currentSelectedClass)+' 클래스룸';
   switchClassroomSubTab(currentClassroomTab);
 }
 
@@ -157,7 +166,7 @@ function initLiveEvalDashboard() {
   const generation = liveDashboardGeneration;
   const classId = getClassIdFromSelected();
   const titleEl = document.getElementById('classroom-live-class-title');
-  if (titleEl) titleEl.textContent = currentSelectedClass;
+  if (titleEl) titleEl.textContent = classroomClassLabel(currentSelectedClass);
   currentLiveSession = null;
   liveSessionError = false;
   currentLiveStudents = [];
@@ -228,7 +237,7 @@ function renderTeacherSessionControl() {
   }
   if (button) {
     button.disabled = teacherSessionPending || !model.action;
-    button.textContent = teacherSessionPending ? teacherSessionPendingLabel : `${currentSelectedClass} ${model.button}`;
+    button.textContent = teacherSessionPending ? teacherSessionPendingLabel : `${classroomClassLabel(currentSelectedClass)} ${model.button}`;
     button.dataset.action = model.action;
     button.setAttribute('aria-busy',String(teacherSessionPending));
   }

@@ -14,7 +14,7 @@
 | [세션 시작·종료 프롬프트](START_NEXT_SESSION.md) | PC·AI 교대 절차 |
 | [개발 안내](DEVELOPMENT.md) | 로컬 실행·검사·Git·환경 설정 |
 | [UX 후속 작업](UX_BACKLOG.md) | 아직 적용하지 않은 화면 전환 개선 |
-| [대문·AI 튜터 구현 계획](HOME_VIEWPORT_TUTOR_PLAN.md) | 첫 화면 높이 맞춤·모바일 이동·우측 접힘 탭의 Gemini 작업 명세 |
+| [대문·AI 튜터 구현·검토 기록](HOME_VIEWPORT_TUTOR_PLAN.md) | 첫 화면 높이 맞춤·모바일 이동·우측 접힘 탭의 구현 및 검증 이력 |
 
 ## 2. 기능별 구현·검증 근거
 

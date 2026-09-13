@@ -12,6 +12,12 @@ test('AI tutor button starts with an accessible closed state', () => {
   assert.match(button, /aria-label="AI 튜터 열기"/);
 });
 
+test('AI tutor closed label is fully hidden until hover, focus, or open state', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'css', 'studio-ui.css'), 'utf8');
+  assert.match(css, /\.chatbot-peek-tab\s*>\s*span\s*{[^}]*opacity:\s*0;[^}]*visibility:\s*hidden;/s);
+  assert.match(css, /\.chatbot-peek-tab:hover\s*>\s*span,[\s\S]*\.chatbot-peek-tab:focus-visible\s*>\s*span,[\s\S]*\.chatbot-peek-tab\.chat-open\s*>\s*span\s*{[^}]*opacity:\s*1;[^}]*visibility:\s*visible;/s);
+});
+
 test('AI tutor toggle preserves its nodes and updates open and closed semantics', () => {
   const classes = new Set(['hidden']);
   const win = { classList: { add: value => classes.add(value), remove: value => classes.delete(value) } };

@@ -4,6 +4,16 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
+test('robot sprite keeps standard and Chrome-compatible directional masks', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'css', 'playground.css'), 'utf8');
+  for (const direction of ['down', 'left', 'right', 'up']) {
+    const rule = css.match(new RegExp(`\\.pg-avatar\\[data-direction=${direction}\\] \\.pg-robot-sprite\\{([^}]*)\\}`))?.[1] || '';
+    assert.match(rule, new RegExp(`mask-image:url\\(assets/robot-mask-${direction}\\.svg\\)`));
+    assert.match(rule, new RegExp(`-webkit-mask-image:url\\(assets/robot-mask-${direction}\\.svg\\)`));
+  }
+  assert.match(css, /\.pg-avatar \.pg-robot-sprite\{[^}]*-webkit-mask-size:100% 100%;[^}]*-webkit-mask-repeat:no-repeat;/);
+});
+
 // Lightweight DOM harness: run the real controller and exercise user events,
 // without browser screenshots, Firebase, or copying its movement calculation.
 function campus(saved = {}, options = {}) {

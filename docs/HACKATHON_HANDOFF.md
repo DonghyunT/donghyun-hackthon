@@ -28,7 +28,6 @@
 - 최근 상태 문서 커밋: `71f4b7a` 이후의 `origin/feature/hackathon` 로그를 기준으로 한다.
 - 2026-09-13 Vercel 운영 화면에서 HTTP 200, 정문 로봇 표시·방향키 이동·첫 안내 제거, AI 튜터 닫힘·열림, 콘솔 오류 0건을 확인했다.
 - 로컬에서 `index.html`을 `file://`로 직접 열면 외부 SVG 마스크 처리 차이로 로봇이 보이지 않을 수 있다. 개발 확인은 `node tools/preview.cjs`의 `http://127.0.0.1:4173/?demo=1`을 사용한다. 실제 로그인·저장·AI는 운영 환경에서 별도로 검증한다.
-- 이 PC에는 Gemini가 만든 미추적 보조 파일 `fix_ai.py`, `fix_index.py`, `fix_pg.py`, `fix_query.py`, `fix_tutor.py`, `update-playground-css.js`가 남아 있다. 현재 제품의 일부가 아니며 실행·커밋·삭제하지 않았다. 다른 PC에는 없을 수 있다.
 
 ## 3. 현재 운영 기능
 

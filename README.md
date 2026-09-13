@@ -6,7 +6,7 @@
 
 중학교 정보 수업의 **추수활동**을 위한 웹앱입니다. 문제 추상화, 알고리즘 설계, 순서도를 학생이 쉽게 적용하고 직접 완성하도록 돕습니다. 수행평가 탭은 별도의 평가 원칙을 따릅니다.
 
-> 처음 개발에 참여하거나 다른 PC·AI에서 이어간다면 [현재 인수인계](docs/HACKATHON_HANDOFF.md) → [새 세션 프롬프트](docs/START_NEXT_SESSION.md) → [개발 안내](docs/DEVELOPMENT.md)를 확인하세요. 필요한 과거 근거는 [문서 안내](docs/INDEX.md)에서 골라 읽습니다.
+> 처음 개발에 참여하거나 다른 PC·AI에서 이어간다면 [현재 인수인계](docs/HANDOFF.md) → [새 세션 프롬프트](docs/START_NEXT_SESSION.md) → [개발 안내](docs/DEVELOPMENT.md)를 확인하세요. 필요한 과거 근거는 [문서 안내](docs/INDEX.md)에서 골라 읽습니다.
 
 ## 수업에서 활용하기
 
@@ -63,7 +63,7 @@
 * [PRD.md](PRD.md): 현재 요구사항·구현 상태·완료 조건·미결정 사항
 * [감사 보고서](audit/AUDIT_REPORT.md): 오류 근거와 검증 한계
 * [문서 안내](docs/INDEX.md): 현재 지침·기능별 근거·과거 이력 분류
-* [현재 인수인계](docs/HACKATHON_HANDOFF.md): 브랜치·진행 상태·다음 작업
+* [현재 인수인계](docs/HANDOFF.md): 브랜치·진행 상태·다음 작업
 * [개발 안내](docs/DEVELOPMENT.md): clone, 로컬 실행·검사·환경 설정
 * [새 세션 프롬프트](docs/START_NEXT_SESSION.md): 다른 PC·AI에서 이어가기
 

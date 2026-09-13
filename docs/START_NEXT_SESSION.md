@@ -2,7 +2,7 @@
 
 어느 모델에서든 같은 Git 저장소를 읽을 수 있다면 아래 한 문장으로 시작할 수 있다.
 
-> **`AGENTS.md, INTENT.md, docs/HACKATHON_HANDOFF.md를 읽고 원격 Git 기준으로 작업 이어가자.`**
+> **`AGENTS.md, INTENT.md, docs/HANDOFF.md를 읽고 원격 Git 기준으로 작업 이어가자.`**
 
 ## 시작용 전체 프롬프트
 
@@ -14,7 +14,7 @@
 먼저 git status --short --branch를 확인하고, git fetch origin --prune으로 원격 상태를 갱신해줘.
 현재 브랜치·미커밋·미추적 파일과 origin/feature/hackathon의 최근 커밋을 비교해줘.
 
-AGENTS.md → INTENT.md → docs/HACKATHON_HANDOFF.md 순서로 모두 읽고,
+AGENTS.md → INTENT.md → docs/HANDOFF.md 순서로 모두 읽고,
 PRD.md의 최신 관련 절과 이번 요청에 필요한 코드·상세 문서만 추가로 확인해줘.
 과거 보고서나 예전 작업 지시를 현재 할 일로 다시 실행하지 마.
 문서의 계획, 코드의 구현, 검사 결과, 원격 푸시, 운영 배포를 구분해줘.
@@ -29,7 +29,7 @@ PRD.md의 최신 관련 절과 이번 요청에 필요한 코드·상세 문서�
 병합·배포·DB·권한 변경은 이번 요청의 승인 범위를 확인한 뒤 진행해줘.
 
 시작할 때 현재 기준, 이번 범위, 확인이 필요한 위험만 짧게 요약하고 바로 진행해줘.
-끝나거나 중단할 때 PRD의 관련 상태와 docs/HACKATHON_HANDOFF.md를 갱신하고,
+끝나거나 중단할 때 PRD의 관련 상태와 docs/HANDOFF.md를 갱신하고,
 브랜치, 커밋, 푸시 여부, 검사 결과, 미확인 사항, 다음 행동을 알려줘.
 
 이번에 할 일: [원하는 작업]
@@ -42,7 +42,7 @@ PRD.md의 최신 관련 절과 이번 요청에 필요한 코드·상세 문서�
 ```text
 여기서 작업을 멈추고 다른 AI가 이어받을 수 있게 정리해줘.
 안전한 변경은 현재 작업 브랜치에 커밋하고 원격에 푸시해줘.
-PRD와 docs/HACKATHON_HANDOFF.md에 브랜치, 커밋, 구현·검증 상태,
+PRD와 docs/HANDOFF.md에 브랜치, 커밋, 구현·검증 상태,
 미완료 항목, 미커밋·미추적 파일, 병합·배포 여부를 기록해줘.
 비밀값과 개인 자료는 넣지 마.
 ```
@@ -50,7 +50,7 @@ PRD와 docs/HACKATHON_HANDOFF.md에 브랜치, 커밋, 구현·검증 상태,
 그다음 새 AI에게 다음처럼 전달한다.
 
 ```text
-AGENTS.md, INTENT.md, docs/HACKATHON_HANDOFF.md와 원격 Git 상태를 확인하고
+AGENTS.md, INTENT.md, docs/HANDOFF.md와 원격 Git 상태를 확인하고
 인수인계에 적힌 작업 브랜치의 마지막 원격 커밋부터 이어가줘.
 이전 AI의 대화를 추측하지 말고 코드와 문서를 기준으로 남은 작업 전체를 맡아줘.
 ```

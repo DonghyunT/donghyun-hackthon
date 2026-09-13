@@ -11,19 +11,23 @@
       const win = document.getElementById('tutor-chat-window');
       const fab = document.getElementById('tutor-fab-btn');
       isTutorOpen = !isTutorOpen;
+      
+      if (fab) {
+        fab.setAttribute('aria-expanded', isTutorOpen.toString());
+        fab.setAttribute('aria-label', isTutorOpen ? 'AI 튜터 닫기' : 'AI 튜터 열기');
+        const icon = fab.querySelector('i');
+        const text = fab.querySelector('span');
+        if (icon) icon.className = isTutorOpen ? 'fa-solid fa-xmark text-lg' : 'fa-solid fa-comment-dots text-lg';
+        if (text) text.textContent = isTutorOpen ? '닫기' : 'AI 튜터';
+      }
+      
       if (isTutorOpen) {
         win.classList.remove('hidden');
-        if (fab) {
-          fab.classList.add('chat-open');
-          fab.innerHTML = '<i class="fa-solid fa-xmark text-lg"></i> <span class="text-xs font-black tracking-tight select-none">닫기</span>';
-        }
+        if (fab) fab.classList.add('chat-open');
         document.getElementById('tutor-input').focus();
       } else {
         win.classList.add('hidden');
-        if (fab) {
-          fab.classList.remove('chat-open');
-          fab.innerHTML = '<i class="fa-solid fa-comment-dots text-lg"></i> <span class="text-xs font-black tracking-tight select-none">AI 튜터</span>';
-        }
+        if (fab) fab.classList.remove('chat-open');
       }
     }
 

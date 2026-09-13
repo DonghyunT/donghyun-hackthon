@@ -73,6 +73,11 @@
       avatar.dataset.direction = Math.abs(dy) >= Math.abs(dx) ? (dy < 0 ? 'up' : 'down') : (dx < 0 ? 'left' : 'right');
     }
     avatar.classList.toggle('is-walking', length > 0 && !reduced);
+    if (length > 0 && !read('pg-first-move-done')) {
+      write('pg-first-move-done', '1');
+      const hint = map.querySelectorAll('.pg-first-hint')[0];
+      if (hint) hint.remove();
+    }
     update();
     frame = requestAnimationFrame(tick);
   }
@@ -173,15 +178,51 @@
     avatar.dataset.direction = 'up';
     avatar.append(element('span', 'pg-robot-sprite'));
     map.append(avatar);
-    const welcome = element('span', 'pg-welcome', '오늘은 어떤 발견을 해 볼까?');
-    welcome.setAttribute('aria-hidden', 'true'); map.append(welcome);
+    
+    if (!read('pg-first-move-done')) {
+      const hint = element('span', 'pg-first-hint');
+      hint.innerHTML = '로봇을 움직여 수업 건물로 가 보세요 <span class="hint-key">방향키</span><span class="hint-touch">화면의 방향 버튼</span>';
+      map.append(hint);
+    }
+    const dpad = element('div', 'pg-dpad');
+    dpad.setAttribute('aria-label', '방향 패드');
+    const btnUp = button('dpad-up', '▲', () => {}); btnUp.setAttribute('aria-label', '위로 이동');
+    const btnDown = button('dpad-down', '▼', () => {}); btnDown.setAttribute('aria-label', '아래로 이동');
+    const btnLeft = button('dpad-left', '◀', () => {}); btnLeft.setAttribute('aria-label', '왼쪽으로 이동');
+    const btnRight = button('dpad-right', '▶', () => {}); btnRight.setAttribute('aria-label', '오른쪽으로 이동');
+    dpad.append(btnUp, btnLeft, btnDown, btnRight);
+    
+    // Add Dpad events
+    const dpadEvents = (btn, key) => {
+      btn.addEventListener('pointerdown', (e) => {
+        if (!allowed() || e.altKey || e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        btn.setPointerCapture(e.pointerId);
+        keys.add(key);
+        if (!frame) tick(performance.now());
+      });
+      const endPointer = (e) => {
+        keys.delete(key);
+        if (btn.hasPointerCapture(e.pointerId)) btn.releasePointerCapture(e.pointerId);
+        if (!keys.size) stop();
+      };
+      btn.addEventListener('pointerup', endPointer);
+      btn.addEventListener('pointercancel', endPointer);
+    };
+    dpadEvents(btnUp, 'ArrowUp');
+    dpadEvents(btnDown, 'ArrowDown');
+    dpadEvents(btnLeft, 'ArrowLeft');
+    dpadEvents(btnRight, 'ArrowRight');
+    
+    // Append dpad to toolbar
+    
     shell.append(map);
     const toolbar = element('div', 'pg-map-toolbar');
     help = element('p', 'pg-help', '방향키로 이동 · Enter로 입장 · 건물을 눌러도 바로 들어가요');
     help.id = 'pg-help'; help.setAttribute('role', 'status');
     enterButton = button('pg-enter', '건물 앞으로 이동해 보세요', () => { if (near) openDomain(near.id, map); });
     enterButton.disabled = true;
-    toolbar.append(help, enterButton); shell.append(toolbar);
+    toolbar.append(help, enterButton); shell.append(toolbar, dpad);
     const shortcuts = element('nav', 'pg-shortcuts'); shortcuts.setAttribute('aria-label', '수업 바로 고르기');
     domains.forEach(d => shortcuts.append(button('', d.name + ' →', event => openDomain(d.id, event.currentTarget))));
     const mount = document.getElementById('playground-mount');

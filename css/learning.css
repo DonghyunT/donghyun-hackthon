@@ -1,0 +1,22 @@
+.learning-shell{width:100%;max-width:960px;margin:auto;padding:24px 0;}
+.learning-shell h2{font-size:1.65rem;font-weight:800;margin-bottom:8px;}
+.learning-shell h3,.learning-teacher h3{font-size:1.1rem;font-weight:750;margin:20px 0 10px;}
+.learning-form{display:grid;gap:16px;max-width:480px;margin:20px 0;}
+.learning-form label{display:grid;gap:6px;font-weight:650;min-width:0;}
+.learning-form input,.learning-form select{width:100%;min-width:0;padding:11px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#0f172a;}
+.learning-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.learning-primary,.learning-secondary{padding:11px 16px;border-radius:8px;font-weight:700;cursor:pointer;white-space:normal;}
+.learning-primary{background:#4338ca;color:#fff;}.learning-secondary{background:#eef2ff;color:#3730a3;}
+.learning-primary:disabled,.learning-secondary:disabled{opacity:.55;cursor:wait;}
+.learning-primary:focus-visible,.learning-secondary:focus-visible,.learning-form input:focus-visible,.learning-form select:focus-visible{outline:3px solid #818cf8;outline-offset:2px;}
+.learning-muted{color:#64748b;font-size:.9rem;line-height:1.65;margin:10px 0;}
+.learning-record{border-bottom:1px solid #cbd5e1;padding:16px 0;overflow-wrap:anywhere;}
+.learning-record summary{cursor:pointer;font-weight:650;line-height:1.7;}
+.learning-original{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.8;padding:16px;background:#f8fafc;margin-top:10px;}
+.learning-teacher{padding:20px;}.learning-code-result{white-space:pre-wrap;overflow-wrap:anywhere;color:#312e81;background:#eef2ff;padding:12px;}
+#learning-status:empty{display:none;}#learning-status{margin:12px auto;padding:12px 16px;max-width:960px;background:#eef2ff;color:#312e81;line-height:1.6;overflow-wrap:anywhere;}
+.learning-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:16px 0;}
+.learning-home-login{margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;}
+.learning-login-dialog{width:calc(100% - 32px);max-width:480px;border:1px solid #cbd5e1;border-radius:12px;padding:24px;color:#0f172a;}
+.learning-login-dialog::backdrop{background:#0f172a80;}.learning-login-dialog h2{font-size:1.3rem;font-weight:800;}
+@media(max-width:480px){.learning-teacher{padding:12px;}.learning-fields{grid-template-columns:1fr;}.learning-shell{padding:12px 0;}}

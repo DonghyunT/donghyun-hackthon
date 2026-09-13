@@ -290,7 +290,7 @@ function renderLiveGrid(students = []) {
 
   // 1번부터 27번까지 27개 좌석 카드 생성
   let html = "";
-  for (let num = 1; num <= 27; num++) {
+  for (let num = 1; num <= 28; num++) {
     const s = studentMap[num];
     const numStr = String(num).padStart(2, '0');
 
@@ -430,6 +430,7 @@ function closeLiveStudentModal() {
 // ============================================================================
 
 function renderAssignmentsTable() {
+  if(window.learningUI)return window.learningUI.renderTeacher();
   const container=document.getElementById('classroom-table-container');
   if(container) container.textContent='단원별 과제 자동 취합은 아직 연결되지 않았습니다. 실습 결과는 이미지·텍스트로 내보내 선생님이 안내한 게시판에 제출해 주세요. 수행평가 답안은 실시간 관제실에서 확인할 수 있습니다.';
 }

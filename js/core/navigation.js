@@ -128,6 +128,7 @@ function switchUnit(unitId, targetStep = null) {
     if (typeof disableStudioMode === 'function') disableStudioMode();
     hideAllViews();
     if (viewRecords) viewRecords.classList.remove('hidden');
+    window.learningUI?.renderRecords();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
@@ -181,6 +182,7 @@ function switchUnitStep(unitIdOrKey, stepName) {
   updateActiveNavigation(unitId);
   currentActiveUnit = unitId;
   currentUnitSubStep[unitId] = stepName;
+  document.querySelectorAll('[data-learning-submit]').forEach(el=>el.hidden=unitId!=='unit1');
 
   const viewRoadmap = document.getElementById('view-roadmap');
   const viewOverview = document.getElementById('view-unit-overview');

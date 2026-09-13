@@ -1,8 +1,12 @@
-# 정보 알고리즘 스튜디오
+# 정보 놀이터
+
+해커톤 배포: https://donghyun-hackthon.vercel.app/ · 운영 브랜치 `feature/hackathon` · Firebase `donghyun-hackthon`.
+
+학생은 홈의 **학생 로그인**에서 학급·번호·개인 비밀번호로 입장합니다(2학년 1~11반, 1~28번). 교사는 **교사 Google 로그인** 또는 **교사 비상 로그인**을 사용합니다. 계정 배부표는 `scratch/private-access/`의 로컬 비공개 파일이며 Git과 웹 배포에서 제외합니다. 최신 구현·검증 상태는 [해커톤 로그인·평가 배포 기록](docs/HACKATHON_LOGIN_RELEASE.md)을 따릅니다.
 
 중학교 정보 수업의 **추수활동**을 위한 웹앱입니다. 문제 추상화, 알고리즘 설계, 순서도를 학생이 쉽게 적용하고 직접 완성하도록 돕습니다. 수행평가 탭은 별도의 평가 원칙을 따릅니다.
 
-> 갱신: 2026-09-13. GitHub main·Vercel 운영 배포·Firestore classrooms 구조와 보안 규칙을 반영했으며 사용자가 교사 로그인을 확인했습니다. 자유 설계 평가와 AI 초벌 검토·교사 확정도 배포되었습니다. [배포 기록](docs/DEPLOYMENT.md), [DB 설계](docs/DATABASE.md), [다른 PC 인수인계](docs/HANDOFF.md)를 확인하세요.
+> 아래 기존 서비스 배포 문서는 이전 환경의 기록입니다. 해커톤의 현행 브랜치·로그인 검증 근거는 위 해커톤 배포 기록을 우선합니다. [기존 배포 기록](docs/DEPLOYMENT.md), [기존 DB 설계](docs/DATABASE.md), [기존 PC 인수인계](docs/HANDOFF.md).
 
 ## 수업에서 활용하기
 

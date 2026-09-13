@@ -15,7 +15,9 @@ test('AI tutor button starts with an accessible closed state', () => {
 test('AI tutor closed label is fully hidden until hover, focus, or open state', () => {
   const css = fs.readFileSync(path.join(__dirname, '..', 'css', 'studio-ui.css'), 'utf8');
   assert.match(css, /\.chatbot-peek-tab\s*>\s*span\s*{[^}]*opacity:\s*0;[^}]*visibility:\s*hidden;/s);
+  assert.match(css, /\.chatbot-peek-tab\s*>\s*span\s*{[^}]*transform:\s*translateX\(7px\);[^}]*transition:[^}]*opacity 0\.18s[^}]*transform 0\.24s/s);
   assert.match(css, /\.chatbot-peek-tab:hover\s*>\s*span,[\s\S]*\.chatbot-peek-tab:focus-visible\s*>\s*span,[\s\S]*\.chatbot-peek-tab\.chat-open\s*>\s*span\s*{[^}]*opacity:\s*1;[^}]*visibility:\s*visible;/s);
+  assert.match(css, /\.chatbot-peek-tab:hover\s*>\s*span,[\s\S]*\.chatbot-peek-tab\.chat-open\s*>\s*span\s*{[^}]*transform:\s*translateX\(0\);[^}]*transition-delay:\s*0\.08s, 0\.04s, 0s;/s);
 });
 
 test('AI tutor toggle preserves its nodes and updates open and closed semantics', () => {

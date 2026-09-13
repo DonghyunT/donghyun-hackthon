@@ -34,11 +34,11 @@
         </button>
         <nav id="main-nav-bar" aria-label="학습 메뉴">
           <button type="button" id="nav-btn-roadmap" onclick="switchUnit('roadmap')" aria-current="page">수업</button>
-          <button type="button" id="nav-btn-records" onclick="switchUnit('records')">나의 기록</button>
-          <button type="button" id="nav-btn-eval" onclick="window.studentEvalApp ? window.studentEvalApp.openLobby() : alert('수행평가를 준비 중입니다. 잠시 후 다시 눌러 주세요.')">수행평가</button>
+          <button type="button" id="nav-btn-classroom" onclick="switchUnit('classroom')">내 클래스룸</button>
         </nav>
         <div class="site-utilities" aria-label="관리 및 전체 메뉴">
-          <button type="button" id="nav-btn-classroom" title="교사용 클래스룸" onclick="switchUnit('classroom')"><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i><span>교사용</span></button>
+          <button type="button" id="header-login-button" onclick="learningUI.openLogin()">로그인</button>
+          <details id="account-menu" hidden><summary><span id="account-label">내 계정</span> ▾</summary><div class="account-dropdown"><button type="button" onclick="switchUnit('classroom')">클래스룸으로</button><button type="button" onclick="finishSharedSession()">로그아웃 · 사용 종료</button></div></details>
           <button type="button" id="btn-mega-menu-toggle" onclick="toggleMegaMenu()" aria-expanded="false" aria-controls="mega-menu-dropdown"><i class="fa-solid fa-bars" aria-hidden="true"></i><span>전체 메뉴</span><i id="mega-chevron" class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
           <button type="button" id="btn-reopen-summary" onclick="reopenSummaryModal()" class="hidden" title="실습 결과 보기"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i><span>실습 결과</span></button>
         </div>
@@ -164,7 +164,7 @@
                 </li>
                 <li>
                   <button type="button" onclick="navigateToMega('classroom')" class="hover:text-indigo-600 hover:font-bold transition-colors cursor-pointer text-left w-full py-0.5">
-                    교사용 클래스룸
+                    내 클래스룸
                   </button>
                 </li>
                 <li>
@@ -200,7 +200,6 @@
         <p class="text-indigo-600 font-bold mb-2">생각을 펼치는 우리들의 정보 시간</p>
         <h1 id="home-heading" class="text-3xl font-black text-slate-900">정보 놀이터</h1>
         <p class="text-slate-600 mt-2">퀴즈로 발견하고, 직접 만들며 배우는 정보 시간. 오늘 배울 내용을 골라 보세요.</p>
-        <div class="learning-home-login"><button id="student-login-button" class="learning-primary" onclick="learningUI.openLogin()">학생 로그인</button><button class="learning-secondary" onclick="switchUnit('classroom')">교사 Google 로그인</button><button class="learning-secondary" onclick="learningUI.openTeacherLogin()">교사 비상 로그인</button><button class="learning-secondary" onclick="finishSharedSession()">로그아웃 · 사용 종료</button></div>
       </section>
 
       <section aria-labelledby="home-courses-heading" class="mb-8">
@@ -274,9 +273,10 @@
       </div>
     </main>
 
+    <main id="view-portal" class="portal-shell hidden"><div id="portal-content"></div></main>
     <!-- [NEW VIEW] 나의 기록 -->
     <main id="view-records" class="w-full flex-1 max-w-[1720px] 2xl:max-w-[1840px] mx-auto px-4 sm:px-8 py-8 hidden min-h-[60vh]">
-      <section class="learning-shell"><h2>나의 기록</h2><p class="learning-muted">오늘 생각하고 만든 내용을 차곡차곡 모아요.</p><div id="learning-records-content"></div><div class="learning-actions"><button class="learning-secondary" onclick="switchUnit('roadmap')">수업으로</button><button class="learning-secondary" onclick="switchUnit('eval')">수행평가로</button><button class="learning-secondary" onclick="finishSharedSession()">로그아웃 · 사용 종료</button></div></section>
+      <section class="learning-shell"><button class="learning-secondary" onclick="switchUnit('classroom')">← 내 클래스룸</button><h2>나의 기록</h2><p class="learning-muted">오늘 생각하고 만든 내용을 차곡차곡 모아요.</p><div id="learning-records-content"></div></section>
     </main>
 <!-- [TAB 2] 📚 알고리즘 개념 학습 (오버플로우 완벽 해결 & 인용부호 제거) -->
     <main id="view-concept" class="max-w-[1720px] 2xl:max-w-[1840px] mx-auto w-full px-4 sm:px-8 py-4 flex-1 flex flex-col gap-4 hidden">
@@ -2187,18 +2187,11 @@
           <p class="text-xs sm:text-sm text-slate-500">답안이 저장되었습니다. 선생님께서 제출 내용을 검토합니다.</p>
         </div>
 
-        <div class="w-full max-w-lg p-6 bg-gradient-to-br from-indigo-50 via-white to-violet-50 rounded-3xl border border-indigo-200 space-y-5 shadow-lg">
-          <div class="text-xs font-bold text-indigo-700">자동 채점 참고 점수</div>
-          <div id="eval-result-total-score" class="text-5xl sm:text-6xl font-black text-indigo-950 font-mono tracking-tight">
-            0점
-          </div>
-          <p class="eval-review-status">교사 검토 전</p>
-          <div id="eval-result-breakdown" class="pt-2"></div>
-        </div>
+        <p class="eval-review-status learning-muted">제출 완료 · 선생님이 답안을 확인합니다.</p>
 
         <button type="button" onclick="finishSharedSession()" class="px-6 py-3 text-slate-600 text-sm font-bold">로그아웃 · 사용 종료</button>
         <button type="button" onclick="window.studentEvalApp.exitExam()" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs sm:text-sm rounded-2xl transition cursor-pointer shadow-md">
-          확인 및 학습 로드맵으로 나가기
+          내 클래스룸으로
         </button>
       </div>
 
@@ -2217,15 +2210,15 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h2 class="text-lg sm:text-2xl font-bold text-slate-900">교사용 클래스룸</h2>
+              <h2 id="teacher-classroom-title" class="text-lg sm:text-2xl font-bold text-slate-900">클래스룸</h2>
             </div>
             <p class="text-xs sm:text-sm text-slate-500">학급별 평가를 운영하고 학생의 제출 상태와 답안을 확인합니다.</p>
           </div>
         </div>
         <div class="flex items-center gap-3">
           <button type="button" onclick="finishSharedSession()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">로그아웃 · 사용 종료</button>
-          <button type="button" onclick="exitClassroomView()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer">
-            <i class="fa-solid fa-arrow-left"></i> <span>학습 로드맵으로</span>
+          <button type="button" onclick="switchUnit('classroom')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-arrow-left"></i> <span>전체 반 목록</span>
           </button>
         </div>
       </div>
@@ -2286,7 +2279,7 @@
           <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-500 border-b border-slate-100 pb-3">
             <span class="text-slate-800 text-sm font-black flex items-center gap-2">
               <i class="fa-solid fa-users text-indigo-600"></i>
-              <span>컴퓨터실 27인 실시간 좌석 현황판 (클릭 시 개별 답안 조회 및 점수 조정)</span>
+              <span>학생 28명 제출 현황 (선택하면 답안과 채점 확인)</span>
             </span>
             <div class="flex items-center gap-3 text-xs">
               <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-300"></span> 미접속</span>
@@ -2475,9 +2468,11 @@
   <!-- 4. 앱 초기화 실행 진입점 -->
   <!-- ========================================== -->
   <script src="js/core/learning-snapshot.js"></script>
+  <script src="js/core/student-password.js"></script>
   <script src="js/core/learning-auth.js"></script>
   <script src="js/core/learning-records.js"></script>
   <script src="js/core/learning-ui.js"></script>
+  <script src="js/core/classroom-portal.js"></script>
   <script src="js/core/session-drafts.js"></script>
   <script src="js/app.js"></script>
 

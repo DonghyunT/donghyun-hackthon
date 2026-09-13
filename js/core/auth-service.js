@@ -48,6 +48,7 @@ window.authService = {
 };
 
 window.finishSharedSession = async function () {
+  if(typeof teacherSessionPending!=='undefined' && teacherSessionPending){alert('평가 상태를 저장하고 있습니다. 완료된 뒤 로그아웃해 주세요.');return;}
   if (window.learningAuth?.busy || (window.studentEvalApp?.joined && !window.studentEvalApp.isSubmitted)) {
     alert('제출하지 않은 평가 답안이 있습니다. 먼저 제출하거나 선생님께 확인해 주세요.'); return;
   }

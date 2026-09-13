@@ -28,7 +28,7 @@ function publish(saved){
   fs.writeFileSync(path.join(dir,'student-accounts.txt'),'\ufeff'+lines.join('\r\n'));
   index.push(`2학년 ${c}반: classes/2-${c}/student-accounts.txt`, `  개별 학생: classes/2-${c}/students/01.txt ~ 28.txt`);
  }
- if(saved.teacher)fs.writeFileSync(path.join(folder,'teacher','emergency-login.txt'),'\ufeff정보 놀이터 교사 비상계정\r\n홈 → 교사 비상 로그인\r\n비밀번호: '+saved.teacher.password+'\r\n교사만 보관하세요.\r\n');
+ if(saved.teacher)fs.writeFileSync(path.join(folder,'teacher','emergency-login.txt'),'\ufeff정보 놀이터 교사 비상계정\r\n우측 상단 로그인 → 교사 → 교사 비상 로그인\r\n비밀번호: '+saved.teacher.password+'\r\n교사만 보관하세요.\r\n');
  index.push('','교사 비상계정: teacher/emergency-login.txt');
  fs.writeFileSync(path.join(folder,'README.txt'),'\ufeff'+index.join('\r\n'));
 }

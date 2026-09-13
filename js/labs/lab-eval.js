@@ -557,37 +557,16 @@ class StudentEvalApp {
   renderResult() {
     window.assessmentWorkspace?.leave();
     window.pendingAssessmentResume=false;sessionStorage.removeItem('ALGO_ACTIVE_EXAM');updateAssessmentNavigation();
-    // 자동 계산은 교사 검토 전 참고값입니다.
+    // 학생 화면에는 점수 대신 서버 제출 완료만 표시한다. 교사 채점은 유지한다.
     this.showScreen('result');
-    const scoreTotalEl = document.getElementById('eval-result-total-score');
-    const scoreBreakdownEl = document.getElementById('eval-result-breakdown');
-    if (scoreTotalEl) scoreTotalEl.textContent = this.scores.pendingReview?`${this.scores.objectiveTotal} / 60점`:`${this.scores.total}점`;
-    document.querySelector('.eval-review-status').textContent=this.scores.pendingReview?'Part 1·2 참고 점수 · Part 3 교사 채점 대기':this.isFreeDesign()?'교사 검토 완료':'교사 검토 전';
-    if (scoreBreakdownEl) {
-      scoreBreakdownEl.innerHTML = `
-        <div class="grid grid-cols-3 gap-3 text-center">
-          <div class="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-            <div class="text-xs font-bold text-indigo-700">Part 1. 객관식 (10문항)</div>
-            <div class="text-xl font-black text-indigo-900 mt-1">${this.scores.part1} / 30점</div>
-          </div>
-          <div class="p-4 bg-amber-50 rounded-2xl border border-amber-100">
-            <div class="text-xs font-bold text-amber-800">Part 2. 단답형 (6문항)</div>
-            <div class="text-xl font-black text-amber-900 mt-1">${this.scores.part2} / 30점</div>
-          </div>
-          <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-            <div class="text-xs font-bold text-emerald-800">Part 3. 순서도 조립</div>
-            <div class="text-xl font-black text-emerald-900 mt-1">${this.scores.pendingReview?'채점 대기':this.scores.part3+' / 40점'}</div>
-          </div>
-        </div>
-      `;
-    }
+    document.querySelector('.eval-review-status').textContent='제출 완료 · 선생님이 답안을 확인합니다.';
   }
 
   // 시험장 나가기 (로드맵으로 복귀)
   exitExam() {
     this.saveDraft();
     if (typeof switchUnit === 'function') {
-      switchUnit('roadmap');
+      switchUnit('classroom');
     }
   }
 }

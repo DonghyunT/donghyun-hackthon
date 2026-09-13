@@ -34,7 +34,7 @@ function updateAssessmentNavigation() {
       delete button.dataset.examLock;delete button.dataset.examTitle;
     }
   });
-  if(locked)closeMegaMenu();
+  if(locked){closeMegaMenu();document.getElementById('account-menu')?.removeAttribute('open');}
   const notice=document.getElementById('eval-navigation-notice');
   if(notice)notice.hidden=!locked;
 }
@@ -79,12 +79,12 @@ const UNIT_META = {
 };
 
 function hideMainViews() {
-  ['view-roadmap', 'view-unit-overview', 'view-records', 'view-concept', 'view-quiz', 'view-lab', 'view-classroom', 'view-eval']
+  ['view-portal', 'view-roadmap', 'view-unit-overview', 'view-records', 'view-concept', 'view-quiz', 'view-lab', 'view-classroom', 'view-eval']
     .forEach(id => document.getElementById(id)?.classList.add('hidden'));
 }
 
 function updateActiveNavigation(unitId) {
-  const active = UNIT_META[unitId] ? 'roadmap' : unitId;
+  const active = UNIT_META[unitId] ? 'roadmap' : ['portal','records','eval'].includes(unitId)?'classroom':unitId;
   document.querySelectorAll('#global-header [aria-current]').forEach(button => button.removeAttribute('aria-current'));
   document.getElementById(`nav-btn-${active}`)?.setAttribute('aria-current', 'page');
 }
@@ -94,11 +94,15 @@ function updateActiveNavigation(unitId) {
  */
 function switchUnit(unitId, targetStep = null) {
   if(isAssessmentLocked() && unitId!=='eval')return;
+  if(typeof teacherSessionPending!=='undefined' && teacherSessionPending)return;
+  window.classroomPortal?.stop();
+  if(unitId!=='records' && window.learningUI)window.learningUI.generation++;
+  if(unitId!=='classroom' && window.learningUI)window.learningUI.teacherGeneration++;
   if(unitId !== 'classroom' && typeof stopLiveEvalDashboard === 'function') stopLiveEvalDashboard();
   closeMegaMenu();
   // 인증이 성공하기 전에는 현재 화면과 선택 상태를 유지한다.
   if (unitId === 'classroom') {
-    if (typeof openClassroomTab === 'function') openClassroomTab();
+    if(window.classroomPortal)window.classroomPortal.open();
     return;
   }
   document.body.classList.toggle('reading-mode',unitId==='roadmap'||(UNIT_META[unitId]&&targetStep!=='lab'));

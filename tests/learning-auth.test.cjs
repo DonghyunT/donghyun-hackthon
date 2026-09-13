@@ -16,7 +16,7 @@ test('student login identity rejects invalid class and number',()=>{
 });
 test('student login verifies roster and rejects wrong code without disclosure',async()=>{
  const {service,auth,state}=setup();const input={classId:'2-1',studentNum:1,entryCode:'secret'};
- state.failLogin=true;await assert.rejects(service.signIn(input),/입장코드/);assert.equal(auth.currentUser,null);
+ state.failLogin=true;await assert.rejects(service.signIn(input),/비밀번호/);assert.equal(auth.currentUser,null);
  state.failLogin=false;const profile=await service.signIn(input);assert.equal(profile.uid,'student');
  await assert.rejects(service.signIn(input),/사용 종료/);assert.equal(auth.currentUser.uid,'student');
  assert.equal(message({code:'auth/user-not-found'}),message({code:'auth/wrong-password'}));

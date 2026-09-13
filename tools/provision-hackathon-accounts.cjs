@@ -10,7 +10,7 @@ async function main(){
  const token=await a.adminToken();
  const users=await a.request('https://identitytoolkit.googleapis.com/v1/projects/'+a.PROJECT+'/accounts:batchGet?maxResults=1000',{token});
  const byEmail=new Map((users.users||[]).map(u=>[u.email,u]));
- const password=()=>crypto.randomBytes(9).toString('base64url');
+ const password=()=>require('../js/core/student-password.js').generate();
  const create=async entry=>{
    let user=byEmail.get(entry.email);
    if(!user){

@@ -11,11 +11,11 @@
   }
   function message(error) {
     const code=error?.code || '';
-    if (/invalid-credential|wrong-password|user-not-found|invalid-login-credentials/.test(code)) return '학급·번호·입장코드를 확인해 주세요.';
+    if (/invalid-credential|wrong-password|user-not-found|invalid-login-credentials/.test(code)) return '학급·번호·비밀번호를 확인해 주세요.';
     if (/too-many-requests/.test(code)) return '로그인 요청이 많아요. 잠시 후 다시 시도해 주세요.';
     if (/network|unavailable/.test(code)) return '연결이 끊겼어요. 인터넷 연결을 확인하고 다시 시도해 주세요.';
     if (/operation-not-allowed/.test(code)) return '학생 로그인이 아직 설정되지 않았어요. 선생님께 알려 주세요.';
-    if (/email-already-in-use/.test(code)) return '이미 발급된 번호입니다. 기존 코드를 사용해 주세요. 발급 중 오류가 났다면 관리자에게 확인해 주세요.';
+    if (/email-already-in-use/.test(code)) return '이미 발급된 번호입니다. 기존 비밀번호를 사용해 주세요. 발급 중 오류가 났다면 관리자에게 확인해 주세요.';
     if (/permission-denied/.test(code)) return '등록 정보 또는 접근 권한을 확인할 수 없어요. 선생님께 알려 주세요.';
     return error?.message || '처리하지 못했어요. 다시 시도해 주세요.';
   }
@@ -38,7 +38,7 @@
       if(this.busy) throw Error('로그인을 확인하고 있어요. 잠시 기다려 주세요.');
       if(this.isLocked()) throw Error('평가에 참여 중에는 계정을 바꿀 수 없어요.');
       const id=identity(input.classId,input.studentNum);
-      if(typeof input.entryCode!=='string'||!input.entryCode)throw Error('개인 입장코드를 입력해 주세요.');
+      if(typeof input.entryCode!=='string'||!input.entryCode)throw Error('비밀번호를 입력해 주세요.');
       if(root.authService.isDemo())throw Error('로컬 시연에서는 실제 학생 로그인 대신 검사 전용 계정을 사용합니다.');
       this.busy=true;
       let auth, signedIn=false;
@@ -81,8 +81,7 @@
         if(root.authService.isDemo())throw Error('로컬 시연에서는 실제 계정을 발급하지 않습니다.');
         await root.authService.teacher();
         // Random per-student password. Never persist it in Firestore, browser storage, or logs.
-        const bytes=root.crypto.getRandomValues(new Uint8Array(12));
-        const entryCode=Array.from(bytes,b=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b%32]).join('');
+        const entryCode=root.studentPassword.generate();
         app=root.firebase.initializeApp(root.FIREBASE_CONFIG,'provision-'+root.crypto.randomUUID());
         const auth=app.auth(); await auth.setPersistence(root.firebase.auth.Auth.Persistence.NONE);
         const {user}=await auth.createUserWithEmailAndPassword(id.email,entryCode);

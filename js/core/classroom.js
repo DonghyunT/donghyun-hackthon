@@ -94,6 +94,7 @@ function exitClassroomView() {
 
 // 탭 전환 (live_eval | assignments)
 function switchClassroomSubTab(tabName) {
+  if(teacherSessionPending)return;
   currentClassroomTab = tabName;
   const btnLive = document.getElementById('classroom-tab-btn-live');
   const btnAssign = document.getElementById('classroom-tab-btn-assign');
@@ -117,7 +118,9 @@ function switchClassroomSubTab(tabName) {
 }
 
 function switchClassroomClass(className) {
+  if(teacherSessionPending||!DEFAULT_CLASSES.includes(className))return;
   currentSelectedClass = className;
+  document.getElementById('teacher-classroom-title').textContent=className+' 클래스룸';
   if (currentClassroomTab === 'live_eval') {
     initLiveEvalDashboard();
   } else {
@@ -134,6 +137,7 @@ function renderClassroomDashboard() {
     `).join('');
   }
 
+  document.getElementById('teacher-classroom-title').textContent=currentSelectedClass+' 클래스룸';
   switchClassroomSubTab(currentClassroomTab);
 }
 
@@ -224,7 +228,7 @@ function renderTeacherSessionControl() {
   }
   if (button) {
     button.disabled = teacherSessionPending || !model.action;
-    button.textContent = teacherSessionPending ? teacherSessionPendingLabel : model.button;
+    button.textContent = teacherSessionPending ? teacherSessionPendingLabel : `${currentSelectedClass} ${model.button}`;
     button.dataset.action = model.action;
     button.setAttribute('aria-busy',String(teacherSessionPending));
   }
@@ -240,7 +244,7 @@ async function handleTeacherSessionAction() {
   const classId = getClassIdFromSelected(), generation = liveDashboardGeneration;
   const expected = {attemptId:currentLiveSession?.attemptId ?? null, status:currentLiveSession?.status ?? 'waiting'};
   if (model.action === 'end' && !confirm(`[${currentSelectedClass}] 평가를 종료하시겠습니까?\n연결된 학생 화면에 현재 답안 제출을 요청합니다. 연결이 끊긴 학생은 제출 여부를 별도로 확인해 주세요.`)) return;
-  if (model.action === 'prepare' && model.state === 'ended' && !confirm('이전 답안을 보관하고 새 평가를 준비하시겠습니까? 학생들은 새 회차에 다시 입장해야 합니다.')) return;
+  if (model.action === 'prepare' && model.state === 'ended' && !confirm(`[${currentSelectedClass}] 이전 답안을 보관하고 새 평가를 준비하시겠습니까? 학생들은 새 회차에 다시 입장해야 합니다.`)) return;
   teacherSessionPending = true;
   teacherSessionPendingLabel = {prepare:'준비 중…', start:'시작 중…', end:'종료 중…'}[model.action];
   setTeacherSessionFeedback(''); renderTeacherSessionControl();
@@ -283,8 +287,8 @@ function renderLiveGrid(students = []) {
   const onlineCount = students.filter(s => s.status !== 'waiting' || s.name).length;
   const submitCount = students.filter(s => s.status === 'submitted').length;
 
-  if (countOnlineEl) countOnlineEl.textContent = `${onlineCount} / 27명`;
-  if (countSubmitEl) countSubmitEl.textContent = `${submitCount} / 27명`;
+  if (countOnlineEl) countOnlineEl.textContent = `${onlineCount} / 28명`;
+  if (countSubmitEl) countSubmitEl.textContent = `${submitCount} / 28명`;
 
   if (!gridContainer) return;
 

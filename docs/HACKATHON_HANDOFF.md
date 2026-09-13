@@ -1,5 +1,7 @@
 # 정보 놀이터 — 해커톤 작업 인수인계
 
+> 최신 기능: PRD 9.8의 역할별 클래스룸·학생 6자리 비밀번호 및 9.9의 전체 단원 기록을 따릅니다. 사용 흐름은 [전체 단원 기록](ALL_UNIT_RECORDS_RELEASE.md), 낮은 우선순위의 부드러운 화면 전환 요청은 [UX 후속 작업](UX_BACKLOG.md)에 기록했습니다.
+
 기록일: 2026-09-13
 작업 폴더: `D:\hack_thon` (계속 유지)
 현재 저장소: https://github.com/DonghyunT/donghyun-hackthon

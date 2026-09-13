@@ -1283,20 +1283,11 @@ function flowchartReviewSnapshot() {
 }
 
 function updateThinkerToolbarButton() {
-  const btn = document.getElementById('btn-toolbar-thinker-submit');
-  if (!btn) return;
-  if (window.isFlowchartAiPassed) {
-    btn.disabled = false;
-    btn.className = "px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm shadow-emerald-500/25 active:scale-95 cursor-pointer animate-pulse";
-    btn.innerHTML = `<i class="fa-solid fa-paper-plane text-[10px]"></i> <span>띵커보드 제출</span>`;
-    btn.title = "AI 검사를 통과했습니다! 띵커보드에 포트폴리오를 제출하세요.";
-  } else {
-    btn.disabled = false;
-    btn.className = "px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-xl text-xs transition flex items-center gap-1.5 border border-slate-300 shadow-2xs cursor-pointer";
-    btn.innerHTML = `<i class="fa-solid fa-paper-plane text-[10px]"></i> <span>현재 상태로 제출</span>`;
-    btn.title = "검사와 보완을 권장하며, 지금 상태로도 제출할 수 있습니다";
-  }
+  const btn=document.getElementById('btn-toolbar-thinker-submit');if(!btn)return;
+  btn.disabled=!!window.learningRecords?.busy || !!window.assessmentWorkspace?.active;
+  btn.className='learning-primary';btn.textContent='내 기록에 저장';btn.title='검사 통과 여부와 관계없이 현재 작품을 저장합니다';
 }
+
 window.updateThinkerToolbarButton = updateThinkerToolbarButton;
 
 // 캔버스 드래그 및 선 잇기 상태
@@ -4601,7 +4592,7 @@ ${complimentsText}
     });
   } catch (err) {
     content.innerHTML = '<p class="p-4 text-slate-700" role="status">AI 연결을 확인할 수 없어요. 직접 실행해 보거나 잠시 후 다시 검사해 주세요. 지금 상태로 제출할 수도 있어요.</p>';
-    if (actions) actions.innerHTML = '<button onclick="closeAiAuditModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl">돌아가서 점검하기</button><button onclick="closeAiAuditModal(); openThinkerSubmissionModal()" class="px-4 py-2 bg-slate-100 rounded-xl">현재 상태로 제출</button>';
+    if (actions) actions.innerHTML = '<button onclick="closeAiAuditModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl">돌아가서 점검하기</button><button onclick="closeAiAuditModal(); learningUI.submit(&quot;flowchart&quot;,&quot;practice&quot;)" class="px-4 py-2 bg-slate-100 rounded-xl">내 기록에 저장</button>';
     return;
   }
 
@@ -4763,9 +4754,9 @@ ${complimentsText}
         <button onclick="closeAiAuditModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
           캔버스 확인
         </button>
-        <button onclick="closeAiAuditModal(); openThinkerSubmissionModal();" class="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black rounded-xl text-xs shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition active:scale-95">
+        <button onclick="closeAiAuditModal(); learningUI.submit('flowchart','practice');" class="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black rounded-xl text-xs shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition active:scale-95">
           <i class="fa-solid fa-clipboard-check"></i>
-          <span>현재 작품 띵커보드에 제출하기</span>
+          <span>내 기록에 저장</span>
         </button>
       `;
     } else {
@@ -4774,7 +4765,7 @@ ${complimentsText}
           <i class="fa-solid fa-screwdriver-wrench"></i>
           <span>캔버스로 돌아가 보완하기</span>
         </button>
-        <button onclick="closeAiAuditModal(); openThinkerSubmissionModal();" class="px-4 py-2 bg-slate-100 rounded-xl">현재 상태로 제출</button>
+        <button onclick="closeAiAuditModal(); learningUI.submit('flowchart','practice');" class="px-4 py-2 bg-slate-100 rounded-xl">현재 상태로 제출</button>
       `;
     }
   }

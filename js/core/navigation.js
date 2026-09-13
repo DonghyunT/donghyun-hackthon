@@ -186,7 +186,8 @@ function switchUnitStep(unitIdOrKey, stepName) {
   updateActiveNavigation(unitId);
   currentActiveUnit = unitId;
   currentUnitSubStep[unitId] = stepName;
-  document.querySelectorAll('[data-learning-submit]').forEach(el=>el.hidden=unitId!=='unit1');
+  window.classroomPortal?.stop();
+  document.querySelectorAll('[data-learning-submit]').forEach(el=>el.hidden=false);
 
   const viewRoadmap = document.getElementById('view-roadmap');
   const viewOverview = document.getElementById('view-unit-overview');

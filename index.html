@@ -276,7 +276,7 @@
     <main id="view-portal" class="portal-shell hidden"><div id="portal-content"></div></main>
     <!-- [NEW VIEW] 나의 기록 -->
     <main id="view-records" class="w-full flex-1 max-w-[1720px] 2xl:max-w-[1840px] mx-auto px-4 sm:px-8 py-8 hidden min-h-[60vh]">
-      <section class="learning-shell"><button class="learning-secondary" onclick="switchUnit('classroom')">← 내 클래스룸</button><h2>나의 기록</h2><p class="learning-muted">오늘 생각하고 만든 내용을 차곡차곡 모아요.</p><div id="learning-records-content"></div></section>
+      <section class="learning-shell records-page"><button class="learning-secondary" onclick="switchUnit('classroom')">← 내 클래스룸</button><h2>나의 기록</h2><p class="learning-muted">오늘 생각하고 만든 내용을 차곡차곡 모아요.</p><div id="learning-records-content"></div></section>
     </main>
 <!-- [TAB 2] 📚 알고리즘 개념 학습 (오버플로우 완벽 해결 & 인용부호 제거) -->
     <main id="view-concept" class="max-w-[1720px] 2xl:max-w-[1840px] mx-auto w-full px-4 sm:px-8 py-4 flex-1 flex flex-col gap-4 hidden">
@@ -859,7 +859,7 @@
 
     <!-- [TAB 2.5] 📝 단원별 쏙쏙 퀴즈 뷰 -->
     <main id="view-quiz" class="max-w-[1720px] 2xl:max-w-[1840px] mx-auto w-full px-4 sm:px-8 py-4 space-y-4 flex-1 hidden">
-      <div data-learning-submit hidden class="learning-actions"><button class="learning-primary" onclick="learningUI.submit()">퀴즈·실습 수업에 제출</button><span class="learning-muted">작성 중인 내용도 괜찮아요.</span></div>
+      <div data-learning-submit hidden class="learning-save-bar"><span>퀴즈 답안을 기록으로 남겨요. 틀린 답도 괜찮아요.</span><button data-record-save class="learning-primary" onclick="learningUI.submit(null,'quiz')">내 기록에 저장</button></div>
       <!-- [초슬림 일체형 서브 바: 56px Zero-Jitter Island] -->
       <div id="quiz-header-bar" class="subbar-island flex items-center w-full justify-between">
         <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
@@ -898,7 +898,7 @@
 
     <!-- [TAB 3] 🧪 실습실 -->
     <main id="view-lab" class="max-w-[1720px] 2xl:max-w-[1840px] mx-auto w-full px-4 sm:px-8 py-4 space-y-4 hidden flex-1">
-      <div data-learning-submit hidden class="learning-actions"><button class="learning-primary" onclick="learningUI.submit()">퀴즈·실습 수업에 제출</button><span class="learning-muted">문제 추상화의 현재 퀴즈·실습을 함께 남겨요.</span></div>
+      <div data-learning-submit hidden class="learning-save-bar"><span>지금 만든 내용을 남겨요. 작성 중이어도 괜찮아요.</span><button data-record-save class="learning-primary" onclick="learningUI.submit(null,'practice')">내 기록에 저장</button></div>
 
       <!-- ============================================================= -->
       <!-- [실습 1코스] 💡 추상화 워크북 (생각 다이어트 연구소) -->
@@ -1186,7 +1186,7 @@
 
                   <!-- 하단 과제 제출용 복사 & 인쇄 버튼 -->
                   <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl flex items-center justify-end gap-2.5 shrink-0">
-                    <button onclick="copyStudentCard()" class="text-xs sm:text-sm bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 shadow-xs">
+                    <button data-record-save onclick="learningUI.submit('abstraction','practice')" class="learning-primary">내 기록에 저장</button><button onclick="copyStudentCard()" class="text-xs sm:text-sm bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 shadow-xs">
                       <i class="fa-solid fa-copy text-violet-600"></i> 패들렛 과제 복사
                     </button>
                     <button onclick="window.print()" class="text-xs sm:text-sm bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 shadow-xs">
@@ -1899,11 +1899,8 @@
                   <button onclick="clearFreeCanvas()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer" title="캔버스 비우기">
                     <i class="fa-solid fa-trash-can text-[10px]"></i> <span>비우기</span>
                   </button>
-                  <!-- 띵커보드 원클릭 제출 버튼 -->
-                  <button id="btn-toolbar-thinker-submit" onclick="openThinkerSubmissionModal()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-xl text-xs transition flex items-center gap-1.5 border border-slate-300 shadow-2xs cursor-pointer" disabled>
-                    <i class="fa-solid fa-lock text-[10px] text-amber-500"></i>
-                    <span>현재 상태로 제출</span>
-                  </button>
+                  <button id="btn-toolbar-thinker-submit" data-record-save onclick="learningUI.submit('flowchart','practice')" class="learning-primary">내 기록에 저장</button>
+                  <button id="btn-flow-image-export" onclick="openThinkerSubmissionModal()" class="learning-secondary">이미지로 내보내기</button>
                 </div>
               </div>
 
@@ -2419,8 +2416,8 @@
       </div>
 
       <div class="flex flex-col sm:flex-row gap-3 pt-2">
-        <button onclick="copyPadletFormat()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-sm transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2">
-          <i class="fa-solid fa-clipboard"></i> 띵커보드 제출 양식 복사하기
+        <button data-record-save onclick="closeSummaryModal(); learningUI.submit('algorithm','practice')" class="learning-primary">내 기록에 저장</button><button onclick="copyPadletFormat()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-sm transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-clipboard"></i> 텍스트로 복사
         </button>
         <button onclick="closeSummaryModal()" class="py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl text-sm transition">
           닫기
@@ -2470,6 +2467,8 @@
   <script src="js/core/learning-snapshot.js"></script>
   <script src="js/core/student-password.js"></script>
   <script src="js/core/learning-auth.js"></script>
+  <script src="js/core/learning-capture.js"></script>
+  <script src="js/core/learning-record-view.js"></script>
   <script src="js/core/learning-records.js"></script>
   <script src="js/core/learning-ui.js"></script>
   <script src="js/core/classroom-portal.js"></script>

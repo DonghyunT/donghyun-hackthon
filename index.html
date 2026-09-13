@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>정보 알고리즘 스튜디오 | 2022 개정 중학교 정보 교과 연계</title>
+  <title>교수평기 올인원 | 정보 수업</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23202938'/%3E%3Cpath d='M16 5 22 15H10Z' fill='white'/%3E%3Ccircle cx='10' cy='23' r='5' fill='white'/%3E%3Cpath d='M18 18h9v9h-9z' fill='white'/%3E%3C/svg%3E">
   
   <!-- 외부 라이브러리 (CDN) -->
@@ -27,20 +27,19 @@
     <!-- 상단 글로벌 네비게이션 헤더 -->
     <header id="global-header" class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs relative">
       <div class="site-header-inner">
-        <button type="button" class="site-brand" onclick="switchUnit('roadmap')" aria-label="정보 알고리즘 스튜디오 홈">
+        <button type="button" class="site-brand" onclick="switchUnit('roadmap')" aria-label="교수평기 올인원 수업 홈">
           <span class="site-brand-mark" aria-hidden="true"><i class="fa-solid fa-shapes"></i></span>
-          <span class="site-brand-name">정보 알고리즘 스튜디오</span>
+          <span class="site-brand-name">교수평기 올인원</span>
         </button>
         <nav id="main-nav-bar" aria-label="학습 메뉴">
-          <button type="button" id="nav-btn-unit1" onclick="switchUnit('unit1', 'concept')">문제 추상화</button>
-          <button type="button" id="nav-btn-unit2" onclick="switchUnit('unit2', 'concept')">알고리즘 설계</button>
-          <button type="button" id="nav-btn-unit3" onclick="switchUnit('unit3', 'concept')">순서도 연구소</button>
+          <button type="button" id="nav-btn-roadmap" onclick="switchUnit('roadmap')" aria-current="page">수업</button>
+          <button type="button" id="nav-btn-records" onclick="switchUnit('records')">나의 기록</button>
           <button type="button" id="nav-btn-eval" onclick="window.studentEvalApp ? window.studentEvalApp.openLobby() : alert('수행평가를 준비 중입니다. 잠시 후 다시 눌러 주세요.')">수행평가</button>
         </nav>
         <div class="site-utilities" aria-label="관리 및 전체 메뉴">
           <button type="button" id="nav-btn-classroom" title="교사용 클래스룸" onclick="switchUnit('classroom')"><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i><span>교사용</span></button>
           <button type="button" id="btn-mega-menu-toggle" onclick="toggleMegaMenu()" aria-expanded="false" aria-controls="mega-menu-dropdown"><i class="fa-solid fa-bars" aria-hidden="true"></i><span>전체 메뉴</span><i id="mega-chevron" class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
-          <button type="button" id="btn-reopen-summary" onclick="reopenSummaryModal()" class="hidden" title="샌드위치 결과 보기"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i><span>실습 결과</span></button>
+          <button type="button" id="btn-reopen-summary" onclick="reopenSummaryModal()" class="hidden" title="실습 결과 보기"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i><span>실습 결과</span></button>
         </div>
       </div>
 
@@ -156,8 +155,11 @@
               <ul class="space-y-2 text-xs text-slate-600 font-medium">
                 <li>
                   <button type="button" onclick="navigateToMega('roadmap')" class="hover:text-indigo-600 hover:font-bold transition-colors cursor-pointer text-left w-full py-0.5">
-                    전체 학습 로드맵
+                    수업 홈
                   </button>
+                </li>
+                <li>
+                  <button type="button" onclick="switchUnit('records')" class="hover:text-indigo-600 hover:font-bold transition-colors cursor-pointer text-left w-full py-0.5">나의 기록</button>
                 </li>
                 <li>
                   <button type="button" onclick="navigateToMega('classroom')" class="hover:text-indigo-600 hover:font-bold transition-colors cursor-pointer text-left w-full py-0.5">
@@ -191,51 +193,102 @@
 
 
     <!-- [TAB 1] 🧭 단원별 학습 로드맵 (Roadmap Dashboard) -->
-    <main id="view-roadmap" class="w-full flex-1">
-      <section class="home-intro" aria-labelledby="home-heading">
-        <p class="home-eyebrow">중학교 정보 · 알고리즘과 프로그래밍</p>
-        <h1 id="home-heading">배운 개념을, 내 생각으로.</h1>
-        <p>문제를 정리하고, 해결 순서를 만들고, 순서도로 표현해 보세요.</p>
-        <div class="home-learning-note"><span>개념 이해</span><i class="fa-solid fa-angle-right" aria-hidden="true"></i><span>퀴즈로 확인</span><i class="fa-solid fa-angle-right" aria-hidden="true"></i><span>직접 실습</span></div>
+    <main id="view-roadmap" class="w-full flex-1 max-w-[1720px] 2xl:max-w-[1840px] mx-auto px-4 sm:px-8 py-8">
+      <section class="home-intro bg-white rounded-3xl p-8 border border-slate-200 shadow-xs mb-8" aria-labelledby="home-heading">
+        <p class="text-indigo-600 font-bold mb-2">중학교 정보 · 알고리즘과 프로그래밍</p>
+        <h1 id="home-heading" class="text-3xl font-black text-slate-900">정보 수업</h1>
+        <p class="text-slate-600 mt-2">학습할 단원을 선택하세요.</p>
       </section>
-      <section aria-labelledby="home-courses-heading">
-        <div class="home-section-heading"><h2 id="home-courses-heading">오늘의 학습</h2><p>처음부터 차근차근, 또는 필요한 활동부터 시작하세요.</p></div>
-        <div class="home-courses">
-          <article class="home-course" data-course="unit1">
-            <div class="home-course-label"><span>학습 01</span><i class="fa-solid fa-lightbulb" aria-hidden="true"></i></div>
-            <h3>문제 추상화</h3><p class="home-course-subtitle">문제에서 꼭 필요한 것만 찾기</p>
-            <p class="home-course-description">현재와 목표 상태를 정리하고, 해결에 필요한 조건을 골라 보세요.</p>
-            <div class="home-course-links"><button type="button" onclick="switchUnit('unit1','concept')" aria-label="문제 추상화 개념">개념</button><button type="button" onclick="switchUnit('unit1','quiz')" aria-label="문제 추상화 퀴즈">퀴즈</button></div>
-            <button type="button" class="home-course-action" onclick="switchUnit('unit1','lab')">생각 다이어트 워크북<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+
+      <section aria-labelledby="home-courses-heading" class="mb-8">
+        <div class="flex items-center gap-2 mb-4">
+          <h2 id="home-courses-heading" class="text-xl font-black text-slate-900">알고리즘</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <article class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col h-full hover:border-indigo-400 hover:shadow-md transition">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4">💡</div>
+            <h3 class="text-lg font-black text-slate-900 mb-2">문제 추상화</h3>
+            <p class="text-sm text-slate-600 flex-1">현재와 목표 상태를 정리하고, 해결에 필요한 조건을 골라 보세요.</p>
+            <button type="button" class="mt-6 w-full py-2.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-600 hover:text-white transition" onclick="switchUnit('unit1')">단원 보기</button>
           </article>
-          <article class="home-course" data-course="unit2">
-            <div class="home-course-label"><span>학습 02</span><i class="fa-solid fa-robot" aria-hidden="true"></i></div>
-            <h3>알고리즘 설계</h3><p class="home-course-subtitle">컴퓨터가 이해할 수 있는 순서 만들기</p>
-            <p class="home-course-description">샌드위치 로봇에게 명령을 내리며 순서와 표현을 다듬어 보세요.</p>
-            <div class="home-course-links"><button type="button" onclick="switchUnit('unit2','concept')" aria-label="알고리즘 설계 개념">개념</button><button type="button" onclick="switchUnit('unit2','quiz')" aria-label="알고리즘 설계 퀴즈">퀴즈</button></div>
-            <button type="button" class="home-course-action" onclick="switchUnit('unit2','lab')">샌드위치 로봇 실습<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+          <article class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col h-full hover:border-indigo-400 hover:shadow-md transition">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4">🤖</div>
+            <h3 class="text-lg font-black text-slate-900 mb-2">알고리즘 설계</h3>
+            <p class="text-sm text-slate-600 flex-1">샌드위치 로봇에게 명령을 내리며 순서와 표현을 다듬어 보세요.</p>
+            <button type="button" class="mt-6 w-full py-2.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-600 hover:text-white transition" onclick="switchUnit('unit2')">단원 보기</button>
           </article>
-          <article class="home-course" data-course="unit3">
-            <div class="home-course-label"><span>학습 03</span><i class="fa-solid fa-diagram-project" aria-hidden="true"></i></div>
-            <h3>순서도 연구소</h3><p class="home-course-subtitle">내 생각을 기호와 연결선으로 표현하기</p>
-            <p class="home-course-description">순차·선택·반복을 익히고 나만의 알고리즘을 순서도로 옮겨 보세요.</p>
-            <div class="home-course-links"><button type="button" onclick="switchUnit('unit3','concept')" aria-label="순서도 연구소 개념">개념</button><button type="button" onclick="switchUnit('unit3','quiz')" aria-label="순서도 연구소 퀴즈">퀴즈</button></div>
-            <button type="button" class="home-course-action" onclick="switchUnit('unit3','lab')">순서도 만들기<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+          <article class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col h-full hover:border-indigo-400 hover:shadow-md transition">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-4">📐</div>
+            <h3 class="text-lg font-black text-slate-900 mb-2">순서도 연구소</h3>
+            <p class="text-sm text-slate-600 flex-1">순차·선택·반복을 익히고 나만의 알고리즘을 순서도로 옮겨 보세요.</p>
+            <button type="button" class="mt-6 w-full py-2.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-600 hover:text-white transition" onclick="switchUnit('unit3')">단원 보기</button>
           </article>
         </div>
       </section>
-      <section class="home-evaluation" aria-labelledby="home-eval-heading">
-        <div><h2 id="home-eval-heading">수행평가</h2><p>선생님의 안내를 받은 뒤 학급·번호·이름으로 입장하세요.</p></div>
-        <button type="button" onclick="window.studentEvalApp.openLobby()">평가 입장<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
-      </section>
-      <p class="home-footnote">2022 개정 교육과정 연계 · 문제 추상화 / 알고리즘 설계 / 순서도</p>
+    </main>
+
+    <!-- [NEW VIEW] 단원 개요 -->
+    <main id="view-unit-overview" class="w-full flex-1 max-w-[1720px] 2xl:max-w-[1840px] mx-auto px-4 sm:px-8 py-8 hidden">
+      <button onclick="switchUnit('roadmap')" class="mb-6 flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 font-bold transition cursor-pointer">
+        <i class="fa-solid fa-arrow-left"></i> 수업으로 돌아가기
+      </button>
+
+      <div class="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8">
+        <div class="flex-1 space-y-4">
+          <div id="overview-icon" class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl"></div>
+          <h1 id="overview-title" class="text-3xl font-black text-slate-900"></h1>
+          <p id="overview-description" class="text-slate-600 text-lg"></p>
+
+          <div class="pt-4 border-t border-slate-100">
+            <h3 class="text-sm font-bold text-indigo-600 mb-3">학습 목표</h3>
+            <ul id="overview-objectives" class="space-y-2 text-sm text-slate-700">
+            </ul>
+          </div>
+        </div>
+        <div class="w-full md:w-80 shrink-0 space-y-3">
+          <button id="overview-btn-concept" class="cursor-pointer w-full p-4 rounded-2xl bg-white border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 flex items-center justify-between transition group text-left">
+            <div>
+              <div class="text-xs font-bold text-slate-400 mb-1">STEP 1</div>
+              <div class="font-black text-slate-800">핵심 개념</div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-indigo-400"></i>
+          </button>
+          <button id="overview-btn-quiz" class="cursor-pointer w-full p-4 rounded-2xl bg-white border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 flex items-center justify-between transition group text-left">
+            <div>
+              <div class="text-xs font-bold text-slate-400 mb-1">STEP 2</div>
+              <div class="font-black text-slate-800">쏙쏙 퀴즈</div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-indigo-400"></i>
+          </button>
+          <button id="overview-btn-lab" class="cursor-pointer w-full p-4 rounded-2xl bg-white border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 flex items-center justify-between transition group text-left">
+            <div>
+              <div class="text-xs font-bold text-slate-400 mb-1">STEP 3</div>
+              <div class="font-black text-slate-800">실전 실습</div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-indigo-400"></i>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- [NEW VIEW] 나의 기록 -->
+    <main id="view-records" class="w-full flex-1 max-w-[1720px] 2xl:max-w-[1840px] mx-auto px-4 sm:px-8 py-8 hidden flex flex-col items-center justify-center min-h-[60vh]">
+      <div class="text-6xl mb-6">🚧</div>
+      <h2 class="text-2xl font-black text-slate-900 mb-2">나의 기록</h2>
+      <p class="text-slate-500 mb-8">수업 기록 기능을 준비하고 있습니다.</p>
+      <button onclick="switchUnit('roadmap')" class="cursor-pointer px-6 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition shadow-sm">
+        수업으로 이동
+      </button>
     </main>
 <!-- [TAB 2] 📚 알고리즘 개념 학습 (오버플로우 완벽 해결 & 인용부호 제거) -->
     <main id="view-concept" class="max-w-[1720px] 2xl:max-w-[1840px] mx-auto w-full px-4 sm:px-8 py-4 flex-1 flex flex-col gap-4 hidden">
       
       <!-- [초슬림 일체형 서브 바: 56px Zero-Jitter Island] -->
-      <div id="concept-header-bar" class="subbar-island">
+      <div id="concept-header-bar" class="subbar-island flex items-center w-full justify-between">
         <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          <button type="button" onclick="switchUnitStep(currentActiveUnit, 'overview')" class="unit-overview-back">
+            <i class="fa-solid fa-arrow-left"></i> <span>개요</span>
+          </button>
           <div class="subbar-title-zone">
             <div id="concept-header-icon" class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-black shrink-0">💡</div>
             <span id="concept-header-title" class="text-xs sm:text-sm font-black text-slate-800 truncate">문제 추상화</span>
@@ -809,8 +862,11 @@
     <!-- [TAB 2.5] 📝 단원별 쏙쏙 퀴즈 뷰 -->
     <main id="view-quiz" class="max-w-[1720px] 2xl:max-w-[1840px] mx-auto w-full px-4 sm:px-8 py-4 space-y-4 flex-1 hidden">
       <!-- [초슬림 일체형 서브 바: 56px Zero-Jitter Island] -->
-      <div id="quiz-header-bar" class="subbar-island">
+      <div id="quiz-header-bar" class="subbar-island flex items-center w-full justify-between">
         <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          <button type="button" onclick="switchUnitStep(currentActiveUnit === 'roadmap' ? 'unit1' : currentActiveUnit, 'overview')" class="unit-overview-back">
+            <i class="fa-solid fa-arrow-left"></i> <span>개요</span>
+          </button>
           <div class="subbar-title-zone">
             <div id="quiz-header-icon" class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-black shrink-0">📝</div>
             <span id="quiz-header-title" class="text-xs sm:text-sm font-black text-slate-800 truncate">문제 추상화</span>
@@ -850,9 +906,12 @@
       <section id="lab-abstraction-content" class="space-y-3.5 fade-enter">
         
         <!-- [초슬림 일체형 추상화 실습 헤더 바: 56px Zero-Jitter Island] -->
-        <div class="subbar-island">
+        <div class="subbar-island flex items-center w-full justify-between">
           <!-- 좌측: 고정존 -->
           <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <button type="button" onclick="switchUnitStep(currentActiveUnit === 'roadmap' ? 'unit1' : currentActiveUnit, 'overview')" class="unit-overview-back">
+              <i class="fa-solid fa-arrow-left"></i> <span>개요</span>
+            </button>
             <div class="subbar-title-zone">
               <div class="w-7 h-7 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center text-sm font-black shrink-0">💡</div>
               <span class="text-xs sm:text-sm font-black text-slate-800 truncate">문제 추상화</span>
@@ -1186,9 +1245,12 @@
 
 <div id="lab-sandwich-content" class="space-y-3.5 fade-enter hidden">
         <!-- [초슬림 일체형 샌드위치 실습 헤더 바: 56px Zero-Jitter Island] -->
-        <div class="subbar-island">
+        <div class="subbar-island flex items-center w-full justify-between">
           <!-- 좌측: 고정존 -->
           <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <button type="button" onclick="switchUnitStep(currentActiveUnit === 'roadmap' ? 'unit2' : currentActiveUnit, 'overview')" class="unit-overview-back">
+              <i class="fa-solid fa-arrow-left"></i> <span>개요</span>
+            </button>
             <div class="subbar-title-zone">
               <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-black shrink-0">🤖</div>
               <span class="text-xs sm:text-sm font-black text-slate-800 truncate">알고리즘 설계</span>
@@ -1450,9 +1512,12 @@
       <!-- ============================================================= -->
       <section id="lab-flowchart-content" class="space-y-4 fade-enter hidden">
         <!-- [초슬림 일체형 순서도 연구소 헤더 바: 56px Zero-Jitter Island] -->
-        <div class="subbar-island">
+        <div class="subbar-island flex items-center w-full justify-between">
           <!-- 좌측: 고정존 -->
           <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            <button type="button" onclick="switchUnitStep(currentActiveUnit === 'roadmap' ? 'unit3' : currentActiveUnit, 'overview')" class="unit-overview-back">
+              <i class="fa-solid fa-arrow-left"></i> <span>개요</span>
+            </button>
             <div class="subbar-title-zone">
               <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-black shrink-0">📐</div>
               <span class="text-xs sm:text-sm font-black text-slate-800 truncate">순서도 연구소</span>

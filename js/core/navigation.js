@@ -45,23 +45,49 @@ const UNIT_META = {
     name: '문제 추상화',
     icon: '💡',
     conceptModule: 1,
-    labId: 'abstraction'
+    labId: 'abstraction',
+    description: '현재와 목표 상태를 정리하고, 해결에 필요한 조건을 골라 보세요.',
+    objectives: [
+      '문제 상황에서 불필요한 요소를 제거하고 핵심만 남길 수 있다.',
+      '초기 상태, 목표 상태, 조건을 명확하게 정의할 수 있다.'
+    ]
   },
   unit2: {
     key: 'algorithm',
     name: '알고리즘 설계',
     icon: '🤖',
     conceptModule: 2,
-    labId: 'sandwich'
+    labId: 'sandwich',
+    description: '샌드위치 로봇에게 명령을 내리며 순서와 표현을 다듬어 보세요.',
+    objectives: [
+      '컴퓨터가 이해할 수 있는 명확한 명령어를 만들 수 있다.',
+      '알고리즘의 5가지 조건(입력, 출력, 명확성, 유한성, 수행 가능성)을 이해한다.'
+    ]
   },
   unit3: {
     key: 'flowchart',
     name: '순서도 연구소',
     icon: '📐',
     conceptModule: 3,
-    labId: 'flowchart'
+    labId: 'flowchart',
+    description: '순차·선택·반복을 익히고 나만의 알고리즘을 순서도로 옮겨 보세요.',
+    objectives: [
+      '알고리즘을 순서도 기호를 사용하여 시각적으로 표현할 수 있다.',
+      '순차, 선택, 반복 구조를 활용하여 효율적인 흐름을 설계할 수 있다.'
+    ]
   }
 };
+
+function hideMainViews() {
+  ['view-roadmap', 'view-unit-overview', 'view-records', 'view-concept', 'view-quiz', 'view-lab', 'view-classroom', 'view-eval']
+    .forEach(id => document.getElementById(id)?.classList.add('hidden'));
+}
+
+function updateActiveNavigation(unitId) {
+  const active = UNIT_META[unitId] ? 'roadmap' : unitId;
+  document.querySelectorAll('#global-header [aria-current]').forEach(button => button.removeAttribute('aria-current'));
+  document.getElementById(`nav-btn-${active}`)?.setAttribute('aria-current', 'page');
+}
 
 /**
  * 1. 최상단 단원(Unit) 전환 함수
@@ -70,38 +96,25 @@ function switchUnit(unitId, targetStep = null) {
   if(isAssessmentLocked() && unitId!=='eval')return;
   if(unitId !== 'classroom' && typeof stopLiveEvalDashboard === 'function') stopLiveEvalDashboard();
   closeMegaMenu();
+  // 인증이 성공하기 전에는 현재 화면과 선택 상태를 유지한다.
+  if (unitId === 'classroom') {
+    if (typeof openClassroomTab === 'function') openClassroomTab();
+    return;
+  }
   document.body.classList.toggle('reading-mode',unitId==='roadmap'||(UNIT_META[unitId]&&targetStep!=='lab'));
   currentActiveUnit = unitId;
 
   // 1. 상단 글로벌 네비게이션 버튼 활성화 스타일 업데이트
-  const navKeys = ['roadmap', 'unit1', 'unit2', 'unit3', 'classroom', 'eval'];
-  navKeys.forEach(k => {
-    const btn = document.getElementById(`nav-btn-${k}`);
-    if (btn) {
-      const isActive = (k === unitId);
-      if (isActive) btn.setAttribute('aria-current','page');
-      else btn.removeAttribute('aria-current');
-    }
-  });
+  updateActiveNavigation(unitId);
 
   const viewRoadmap = document.getElementById('view-roadmap');
-  const viewConcept = document.getElementById('view-concept');
-  const viewQuiz = document.getElementById('view-quiz');
-  const viewLab = document.getElementById('view-lab');
-  const viewClassroom = document.getElementById('view-classroom');
   const viewEval = document.getElementById('view-eval');
+  const viewRecords = document.getElementById('view-records');
 
   // 모든 뷰 초기 비활성화 보조 함수
-  const hideAllViews = () => {
-    if (viewRoadmap) viewRoadmap.classList.add('hidden');
-    if (viewConcept) viewConcept.classList.add('hidden');
-    if (viewQuiz) viewQuiz.classList.add('hidden');
-    if (viewLab) viewLab.classList.add('hidden');
-    if (viewClassroom) viewClassroom.classList.add('hidden');
-    if (viewEval) viewEval.classList.add('hidden');
-  };
+  const hideAllViews = hideMainViews;
 
-  // 2. 로드맵 처리
+  // 2. 로드맵 처리 (수업 홈)
   if (unitId === 'roadmap') {
     if (typeof disableStudioMode === 'function') disableStudioMode();
     hideAllViews();
@@ -110,11 +123,12 @@ function switchUnit(unitId, targetStep = null) {
     return;
   }
 
-  // 3. 교사용 클래스룸 처리 (풀페이지 뷰)
-  if (unitId === 'classroom') {
-    if (typeof openClassroomTab === 'function') {
-      openClassroomTab();
-    }
+  // 나의 기록 처리
+  if (unitId === 'records') {
+    if (typeof disableStudioMode === 'function') disableStudioMode();
+    hideAllViews();
+    if (viewRecords) viewRecords.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
 
@@ -131,10 +145,10 @@ function switchUnit(unitId, targetStep = null) {
   const meta = UNIT_META[unitId];
   if (!meta) return;
 
-  // step 결정 (지정되지 않은 경우 이전 상태 또는 'concept' 기본)
+  // 단원 선택의 기본 진입점은 개요이다.
   let step = targetStep;
   if (!step) {
-    step = currentUnitSubStep[unitId] || 'concept';
+    step = 'overview';
   } else if (step === 1 || step === '1') {
     step = 'concept';
   } else if (step === 2 || step === '2') {
@@ -151,8 +165,6 @@ function switchUnit(unitId, targetStep = null) {
  */
 function switchUnitStep(unitIdOrKey, stepName) {
   if(isAssessmentLocked())return;
-  document.body.classList.toggle('reading-mode',stepName!=='lab');
-  ["view-classroom", "view-eval"].forEach(id => document.getElementById(id)?.classList.add("hidden"));
   // unitId 표준화 ('abstraction' -> 'unit1')
   let unitId = unitIdOrKey;
   if (unitIdOrKey === 'abstraction') unitId = 'unit1';
@@ -162,15 +174,58 @@ function switchUnitStep(unitIdOrKey, stepName) {
   const meta = UNIT_META[unitId];
   if (!meta) return;
 
+  if (typeof stopLiveEvalDashboard === 'function') stopLiveEvalDashboard();
+  closeMegaMenu();
+  hideMainViews();
+  document.body.classList.toggle('reading-mode',stepName!=='lab');
+  updateActiveNavigation(unitId);
   currentActiveUnit = unitId;
   currentUnitSubStep[unitId] = stepName;
 
   const viewRoadmap = document.getElementById('view-roadmap');
+  const viewOverview = document.getElementById('view-unit-overview');
   const viewConcept = document.getElementById('view-concept');
   const viewQuiz = document.getElementById('view-quiz');
   const viewLab = document.getElementById('view-lab');
+  const viewRecords = document.getElementById('view-records');
 
   if (viewRoadmap) viewRoadmap.classList.add('hidden');
+  if (viewRecords) viewRecords.classList.add('hidden');
+
+  // 단원 개요 화면 렌더링
+  if (stepName === 'overview') {
+    if (typeof disableStudioMode === 'function') disableStudioMode();
+    if (viewConcept) viewConcept.classList.add('hidden');
+    if (viewQuiz) viewQuiz.classList.add('hidden');
+    if (viewLab) viewLab.classList.add('hidden');
+
+    // Overview 데이터 바인딩
+    const ovIcon = document.getElementById('overview-icon');
+    const ovTitle = document.getElementById('overview-title');
+    const ovDesc = document.getElementById('overview-description');
+    const ovObjList = document.getElementById('overview-objectives');
+    const ovConceptBtn = document.getElementById('overview-btn-concept');
+    const ovQuizBtn = document.getElementById('overview-btn-quiz');
+    const ovLabBtn = document.getElementById('overview-btn-lab');
+
+    if (ovIcon) ovIcon.textContent = meta.icon;
+    if (ovTitle) ovTitle.textContent = meta.name;
+    if (ovDesc) ovDesc.textContent = meta.description;
+
+    if (ovObjList && meta.objectives) {
+      ovObjList.innerHTML = meta.objectives.map(obj => `<li><i class="fa-solid fa-check text-indigo-500 mr-2"></i>${obj}</li>`).join('');
+    }
+
+    if (ovConceptBtn) ovConceptBtn.onclick = () => switchUnitStep(unitId, 'concept');
+    if (ovQuizBtn) ovQuizBtn.onclick = () => switchUnitStep(unitId, 'quiz');
+    if (ovLabBtn) ovLabBtn.onclick = () => switchUnitStep(unitId, 'lab');
+
+    if (viewOverview) viewOverview.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  if (viewOverview) viewOverview.classList.add('hidden');
 
   // 각 단원별 상단 3단계 헤더 업데이트
   updateAllUnitStepHeaders(unitId, stepName);

@@ -1,6 +1,6 @@
 const fs=require('node:fs'), path=require('node:path'), http=require('node:http'), assert=require('node:assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'C:/Users/안동현/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
-const root=path.resolve(__dirname,'..'), output=path.join(__dirname,'results');
+const root=path.resolve(__dirname,'..'), output=process.env.TEST_OUTPUT_DIR || path.join(__dirname,'results');
 fs.mkdirSync(output,{recursive:true});
 (async()=>{
   const server=http.createServer((req,res)=>{
@@ -25,7 +25,8 @@ fs.mkdirSync(output,{recursive:true});
     const page=await context.newPage();
     page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});page.on('dialog',d=>d.accept());
     const url='http://127.0.0.1:'+server.address().port+'/?demo=1';
-    await page.goto(url,{waitUntil:'networkidle'});
+    await page.goto(url,{waitUntil:'load'});
+    await page.waitForFunction(()=>document.readyState==='complete' && typeof switchUnit==='function');
     async function check(name,task) {try{await task();results.push({name,pass:true});}catch(error){results.push({name,pass:false,error:error.message});}}
     await check('header actions remain visible and separate across window widths',async()=>{
       for(const width of [1920,1440,1351,1350,1251,1250,1100,900,768,681,680,540,431,430,390,360,320]) {
@@ -74,19 +75,21 @@ fs.mkdirSync(output,{recursive:true});
       await page.evaluate(()=>{document.getElementById('btn-reopen-summary').classList.add('hidden');document.documentElement.style.fontSize='24px';});
       await page.setViewportSize({width:768,height:900});
       await page.locator('#btn-mega-menu-toggle').click({trial:true});
-      await page.locator('#nav-btn-unit3').click({trial:true});
+      await page.locator('#nav-btn-roadmap').click({trial:true});
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));
       } finally {
         await page.evaluate(()=>{document.getElementById('btn-reopen-summary').classList.add('hidden');document.documentElement.style.removeProperty('font-size');});
         await page.setViewportSize({width:1440,height:900});
       }
     });
-    await check('home shortcuts open every advertised learning activity',async()=>{
+    await check('home opens unit overviews and every advertised learning activity',async()=>{
       for(const unit of ['unit1','unit2','unit3'])for(const [step,target] of [['concept','view-concept'],['quiz','view-quiz'],['lab','view-lab']]) {
         await page.evaluate(()=>switchUnit('roadmap'));
-        await page.locator('.home-course[data-course="'+unit+'"] button[onclick*="\''+step+'\'"]').click();
+        await page.locator('#view-roadmap button[onclick="switchUnit(\''+unit+'\')"]').click();
+        assert.equal(await page.locator('#view-unit-overview').isVisible(),true);
+        await page.locator('#overview-btn-'+step).click();
         assert.equal(await page.locator('#'+target).isVisible(),true);
-        assert.equal(await page.locator('#nav-btn-'+unit).getAttribute('aria-current'),'page');
+        assert.equal(await page.locator('#nav-btn-roadmap').getAttribute('aria-current'),'page');
       }
     });
     await check('reading, lobby and teacher pages fit narrow windows',async()=>{
@@ -112,11 +115,39 @@ fs.mkdirSync(output,{recursive:true});
       await page.setViewportSize({width:1440,height:900});
     });
     await check('navigation has one visible main view',async()=>{
-      for(const target of ['unit1','eval','unit3','classroom','unit2','roadmap']) {
-        await page.evaluate(target=>{isTeacherAuthenticated=true;switchUnit(target,'lab');},target);
-        const visible=await page.evaluate(()=>['view-roadmap','view-concept','view-quiz','view-lab','view-eval','view-classroom'].filter(id=>{const e=document.getElementById(id);return e&&e.getBoundingClientRect().height>0&&getComputedStyle(e).display!=='none';}));
+      for(const target of ['unit1','classroom','records','classroom','eval','unit3','classroom','unit2','roadmap']) {
+        await page.evaluate(target=>{isTeacherAuthenticated=true;switchUnit(target);},target);
+        const visible=await page.evaluate(()=>[...document.querySelectorAll('main[id^="view-"]')].filter(e=>e.getBoundingClientRect().height>0&&getComputedStyle(e).display!=='none').map(e=>e.id));
         assert.equal(visible.length,1, target+': '+visible);
       }
+    });
+    await check('overview return remains usable on narrow screens',async()=>{
+      await page.setViewportSize({width:390,height:900});
+      for(const unit of ['unit1','unit2','unit3'])for(const step of ['concept','quiz','lab']) {
+        await page.evaluate(({unit,step})=>switchUnit(unit,step),{unit,step});
+        await page.locator('.unit-overview-back:visible').click();
+        assert.equal(await page.locator('#view-unit-overview').isVisible(),true);
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1));
+      }
+      await page.screenshot({path:path.join(output,'platform-overview-390.png'),fullPage:true});
+      await page.setViewportSize({width:1440,height:900});
+    });
+    await check('failed teacher login preserves the current page and unit navigation releases subscriptions',async()=>{
+      await page.evaluate(async()=>{
+        switchUnit('records');isTeacherAuthenticated=false;
+        const original=authService.teacher,originalAlert=window.alert;
+        try{authService.teacher=async()=>{throw Error('검증용 로그인 취소');};window.alert=()=>{};switchUnit('classroom');await new Promise(r=>setTimeout(r,0));}
+        finally{authService.teacher=original;window.alert=originalAlert;}
+      });
+      assert.equal(await page.locator('#view-records').isVisible(),true);
+      assert.equal(await page.locator('#view-classroom').isVisible(),false);
+      assert.equal(await page.locator('#nav-btn-records').getAttribute('aria-current'),'page');
+      const cleaned=await page.evaluate(()=>{
+        isTeacherAuthenticated=true;switchUnit('classroom');stopLiveEvalDashboard();
+        let calls=0;liveEvalUnsub=()=>calls++;liveSessionUnsub=()=>calls++;
+        switchUnitStep('unit1','overview');return calls;
+      });
+      assert.equal(cleaned,2);
     });
     await check('practice parser and no fabricated branch',async()=>{
       const result=await page.evaluate(()=>{
@@ -158,13 +189,13 @@ fs.mkdirSync(output,{recursive:true});
     });
     await check('practice and quiz drafts survive refresh',async()=>{
       await page.evaluate(()=>{switchUnit('unit3','lab');switchFlowchartStep(5);nlCards=[{id:'draft-1',type:'seq',text:'내가 쓴 기획'}];userQuizAnswers.flowchart.q1=2;document.getElementById('inp-current').value='나의 문제';});
-      await page.reload({waitUntil:'networkidle'});
+      await page.reload({waitUntil:'load'});
       assert.equal(await page.evaluate(()=>nlCards[0].text),'내가 쓴 기획');
       assert.equal(await page.evaluate(()=>userQuizAnswers.flowchart.q1),2);
       assert.equal(await page.locator('#inp-current').inputValue(),'나의 문제');
     });
     const teacher=await context.newPage();teacher.on('dialog',d=>d.accept());teacher.on('pageerror',e=>errors.push(e.message));
-    await teacher.goto(url,{waitUntil:'networkidle'});
+    await teacher.goto(url,{waitUntil:'load'});
     await teacher.evaluate(()=>{window.roster=[];evalService.listenStudents('2-1',list=>window.roster=list);});
     await check('two tabs join and receive start',async()=>{
       await page.evaluate(async()=>{switchUnit('eval');document.getElementById('eval-st-name').value='검증학생';await studentEvalApp.enterWaitingRoom();});
@@ -173,11 +204,13 @@ fs.mkdirSync(output,{recursive:true});
       await page.waitForFunction(()=>studentEvalApp.sessionStatus==='in_progress');
     });
     await check('active exam locks header, direct navigation and teacher page',async()=>{
-      assert.equal(await page.locator('#nav-btn-unit1').isDisabled(),true);
+      assert.equal(await page.locator('#nav-btn-roadmap').isDisabled(),true);
       assert.equal(await page.locator('#nav-btn-classroom').isDisabled(),true);
-      await page.evaluate(()=>{switchUnit('roadmap');switchUnitStep('unit1','quiz');activateLabContent('sandwich');showClassroomView();openMegaMenu();studentEvalApp.exitExam();});
+      await page.evaluate(()=>{switchUnit('roadmap');switchUnit('records');switchUnit('unit1');switchUnitStep('unit1','overview');switchUnitStep('unit1','quiz');activateLabContent('sandwich');showClassroomView();openMegaMenu();studentEvalApp.exitExam();});
       assert.equal(await page.locator('#view-eval').isVisible(),true);
       assert.equal(await page.locator('#view-classroom').isVisible(),false);
+      assert.equal(await page.locator('#view-records').isVisible(),false);
+      assert.equal(await page.locator('#view-unit-overview').isVisible(),false);
       assert.equal(await page.evaluate(()=>isMegaMenuOpen),false);
     });
     await check('assessment plans are student-written, reorderable and persisted with answers',async()=>{
@@ -202,7 +235,7 @@ fs.mkdirSync(output,{recursive:true});
     });
     await check('refresh restores answers and same-theme graph',async()=>{
       await page.evaluate(()=>{studentEvalApp.onSelectPart1('q1',2);studentEvalApp.onInputPart2('q11','"><img src=x onerror=window.xss=2>');studentEvalApp.addPart3Block('process');studentEvalApp.handlePart3BlockText(freeBlocks.at(-1).id,'학생 작업');});
-      await page.reload({waitUntil:'networkidle'});
+      await page.reload({waitUntil:'load'});
       await page.waitForFunction(()=>studentEvalApp.sessionStatus==='in_progress');
       assert.equal(await page.locator('#eval-screen-exam').isVisible(),true);
       const state=await page.evaluate(()=>({answer:studentEvalApp.answers.part1.q1,text:studentEvalApp.answers.part3.blocks.find(b=>b.text==='학생 작업')?.text,xss:window.xss}));
@@ -214,7 +247,7 @@ fs.mkdirSync(output,{recursive:true});
       await page.evaluate(async()=>{window.realSubmit=evalService.submitStudentExam;evalService.submitStudentExam=async()=>{throw Error('test offline');};await studentEvalApp.submitExam(true);});
       assert.equal(await page.evaluate(()=>studentEvalApp.isSubmitted),false);
       assert.equal(await page.evaluate(()=>studentEvalApp.isSubmitting),false);
-      assert.equal(await page.locator('#nav-btn-unit1').isDisabled(),true);
+      assert.equal(await page.locator('#nav-btn-roadmap').isDisabled(),true);
       await page.evaluate(()=>{evalService.submitStudentExam=window.realSubmit;});
     });
     await check('assessment malformed flow highlights blocked position only',async()=>{
@@ -249,11 +282,11 @@ fs.mkdirSync(output,{recursive:true});
       await teacher.evaluate(()=>evalService.endSession('2-1'));
       await page.waitForFunction(()=>studentEvalApp.isSubmitted);
       assert.equal(await page.evaluate(()=>studentEvalApp.timerInterval),null);
-      await page.reload({waitUntil:'networkidle'});
+      await page.reload({waitUntil:'load'});
       await page.evaluate(async()=>{switchUnit('eval');document.getElementById('eval-st-name').value='검증학생';await studentEvalApp.enterWaitingRoom();});
       assert.equal(await page.evaluate(()=>studentEvalApp.isSubmitted),true);
       assert.equal(await page.locator('#eval-screen-result').isVisible(),true);
-      assert.equal(await page.locator('#nav-btn-unit1').isDisabled(),false);
+      assert.equal(await page.locator('#nav-btn-roadmap').isDisabled(),false);
     });
     await check('studio canvas and toolbar usable across viewports',async()=>{
       for(const width of [1920,1440,1366,1024,768]) {

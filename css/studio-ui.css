@@ -15,6 +15,8 @@ button, a, input, select, textarea, summary { -webkit-tap-highlight-color:transp
 :is(button,a,input,select,textarea,summary):focus-visible { outline:2px solid var(--ui-accent); outline-offset:3px; }
 button { touch-action:manipulation; }
 button:disabled { cursor:not-allowed; }
+.unit-overview-back { display:flex; align-items:center; gap:6px; min-height:40px; padding-inline:4px; color:var(--ui-muted); font-size:12px; font-weight:600; white-space:nowrap; flex-shrink:0; }
+.unit-overview-back:hover { color:var(--ui-ink); }
 body > div:first-child, main { min-width:0; }
 
 #global-header { background:#fff; box-shadow:none; }

@@ -68,10 +68,8 @@ function showClassroomView() {
   document.body.classList.remove('reading-mode');
   if (typeof disableStudioMode === "function") disableStudioMode();
   // 모든 메인 뷰 숨기고 view-classroom 단독 노출
-  ['view-roadmap', 'view-concept', 'view-quiz', 'view-lab', 'view-eval'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('hidden');
-  });
+  hideMainViews();
+  currentActiveUnit = 'classroom';
 
   const viewClassroom = document.getElementById('view-classroom');
   if (viewClassroom) viewClassroom.classList.remove('hidden');

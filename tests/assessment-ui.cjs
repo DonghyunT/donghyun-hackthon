@@ -1,7 +1,8 @@
 // Local UI regressions: no production authentication, database writes or AI calls.
 const fs = require('node:fs'), path = require('node:path'), http = require('node:http'), assert = require('node:assert/strict');
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'C:/Users/안동현/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
-const root = path.resolve(__dirname, '..'), output = path.join(__dirname, 'results');
+const root = path.resolve(__dirname, '..'), output = process.env.TEST_OUTPUT_DIR || path.join(__dirname, 'results');
+fs.mkdirSync(output,{recursive:true});
 (async () => {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost');
@@ -21,10 +22,12 @@ const root = path.resolve(__dirname, '..'), output = path.join(__dirname, 'resul
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', msg => {if(msg.type()==='error')consoleErrors.push(msg.text());});
     page.on('dialog', d => d.accept());
-    await page.goto(`http://127.0.0.1:${server.address().port}/index.html?demo=1`, {waitUntil:'networkidle'});
+    await page.goto(`http://127.0.0.1:${server.address().port}/index.html?demo=1`, {waitUntil:'load'});
+    await page.waitForFunction(()=>document.readyState==='complete' && window.evalService && window.studentEvalApp);
     async function check(name, task) {console.log('Checking: '+name);try {await task(); results.push({name,pass:true});} catch(error) {results.push({name,pass:false,error:error.message});}}
     const teacher=await page.context().newPage();teacher.on('dialog',d=>d.accept());teacher.on('pageerror',e=>errors.push(e.message));
-    const url=page.url();await teacher.goto(url,{waitUntil:'networkidle'});
+    const url=page.url();await teacher.goto(url,{waitUntil:'load'});
+    await teacher.waitForFunction(()=>document.readyState==='complete' && window.evalService && window.studentEvalApp);
     await page.evaluate(()=>{nlCards=[{id:'practice-card',type:'seq',text:'실습 전용 초안'}];freeBlocks=[{id:'practice-start',shape:'terminal',text:'시작',x:80,y:40}];freeConnections=[];savePracticeDraft();});
     const practiceBefore=await page.evaluate(()=>sessionStorage.getItem('ALGO_PRACTICE_DRAFT_V1'));
     await teacher.evaluate(()=>evalService.prepareSession('2-1'));
@@ -109,7 +112,7 @@ const root = path.resolve(__dirname, '..'), output = path.join(__dirname, 'resul
       assert.ok((await teacher.locator('#classroom-live-modal-p3').textContent()).includes('[선택] 조건: 기온이 28℃ 초과인가?'));
       assert.ok((await teacher.locator('#classroom-live-modal-p3').textContent()).includes('맞으면: 창문 열기'));
       assert.ok((await teacher.locator('#classroom-live-modal-p3').textContent()).includes('[반복]'));
-      await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>assessmentWorkspace.active);
+      await page.reload({waitUntil:'load'});await page.waitForFunction(()=>assessmentWorkspace.active);
       assert.equal(await page.locator('[data-eval-submit]').first().isDisabled(),false);
       assert.equal(await page.evaluate(()=>studentEvalApp.answers.part3.plan.steps[1].yesAction),'창문 열기');
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('ALGO_PRACTICE_DRAFT_V1')),practiceBefore);
@@ -185,14 +188,14 @@ const root = path.resolve(__dirname, '..'), output = path.join(__dirname, 'resul
       await page.waitForFunction(()=>!studentEvalApp.isSubmitted&&studentEvalApp.currentPart==='part1');
       assert.equal(await page.evaluate(()=>!!studentEvalApp.visitedPart3),false);
       assert.equal(await page.locator('[data-eval-submit]').first().isDisabled(),true);
-      await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>studentEvalApp.sessionStatus==='in_progress');
+      await page.reload({waitUntil:'load'});await page.waitForFunction(()=>studentEvalApp.sessionStatus==='in_progress');
       assert.equal(await page.evaluate(()=>studentEvalApp.currentPart),'part1');
       assert.equal(await page.evaluate(()=>studentEvalApp.answers.part3.questionVersion),3);
       assert.equal(await page.evaluate(()=>studentEvalApp.getAssessmentPlan().steps.length),0);
     });
     await check('time expiry submits even without visiting Part 3',async()=>{
       await teacher.evaluate(async()=>{await evalService.endSession('2-1');await evalService.prepareSession('2-1');});
-      const fresh=await page.context().newPage();fresh.on('dialog',d=>d.accept());fresh.on('pageerror',e=>errors.push(e.message));await fresh.goto(url,{waitUntil:'networkidle'});
+      const fresh=await page.context().newPage();fresh.on('dialog',d=>d.accept());fresh.on('pageerror',e=>errors.push(e.message));await fresh.goto(url,{waitUntil:'load'});
       await fresh.evaluate(async()=>{switchUnit('eval');document.getElementById('eval-st-num').value=2;document.getElementById('eval-st-name').value='시간 검증';await studentEvalApp.enterWaitingRoom();});
       await teacher.evaluate(()=>evalService.startSession('2-1'));await fresh.waitForFunction(()=>studentEvalApp.sessionStatus==='in_progress');
       await fresh.evaluate(()=>studentEvalApp.deadlineMs=Date.now()-1);

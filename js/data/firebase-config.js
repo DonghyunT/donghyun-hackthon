@@ -12,12 +12,12 @@
 
 // 1. Firebase 프로젝트 설정 객체
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyBZs36UcL7wMs1vecC9N77ygzuvExanjbk",
-  authDomain: "donghyun-algo.firebaseapp.com",
-  projectId: "donghyun-algo",
-  storageBucket: "donghyun-algo.firebasestorage.app",
-  messagingSenderId: "283104372111",
-  appId: "1:283104372111:web:ba59ae4d6a58f4f5d6d7fa"
+  apiKey: "AIzaSyD32l3cguaTbSvk4XtKnqxDZ4toc2fy-Kw",
+  authDomain: "donghyun-hackthon.firebaseapp.com",
+  projectId: "donghyun-hackthon",
+  storageBucket: "donghyun-hackthon.firebasestorage.app",
+  messagingSenderId: "341599350414",
+  appId: "1:341599350414:web:98d5a128da488645cda3df"
 };
 
 // 전역 상태 보관용

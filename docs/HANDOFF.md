@@ -2,7 +2,7 @@
 
 이 문서는 새 PC나 새 AI가 가장 먼저 읽는 현재 상태 요약이다. 이전 대화를 알고 있다고 가정하지 않는다. 작업 규칙은 `AGENTS.md`, 교육 의도는 `INTENT.md`, 기능의 상세 최신 명세는 `PRD.md`가 최상위 기준이다.
 
-- 갱신 날짜: 2026-09-13
+- 갱신 날짜: 2026-09-14
 - 운영 저장소: https://github.com/DonghyunT/donghyun-hackthon
 - 운영 브랜치: `feature/hackathon`
 - 운영 주소: https://donghyun-hackthon.vercel.app/
@@ -21,11 +21,19 @@
 
 ## 2. 현재 기준 상태
 
-- 현재 진행 중인 제품 코드 작업: 없음.
-- 현재 문서 작업: 완료. `codex/context-portability`에서 새 PC·새 AI의 문맥 복원 절차를 정비하고, 사용자 승인에 따라 이 파일을 `HACKATHON_HANDOFF.md`에서 `HANDOFF.md`로 바꾸어 모든 현재 참조를 갱신했다. `AGENTS.md`에는 Git 중심 복원·한 작업 한 AI·위험 기반 검증·현재 운영 브랜치 원칙을 최소 범위로 반영했다. 운영 병합 커밋은 `4d3fd6c`이며 Vercel 홈의 새 배포 시각과 HTTP 200을 확인했다. Markdown 문서는 Vercel 공개 자산으로 직접 제공되지 않으며 Git 저장소에서 읽는다.
-- 최신 기준은 항상 `origin/feature/hackathon`이다. 이 문서를 읽는 시점에 원격 로그를 다시 확인한다.
+- 현재 작업 브랜치: `codex/cleanup-and-db-alignment` (운영 기준: `origin/feature/hackathon`).
+- 마지막 작업 커밋: `541808e` (Firebase fallback 수정, DB 문서 최신화, 레거시 스크린샷 74개 정리).
+- 변경 및 보호 범위:
+  * `api/chat.js`, `api/assessment.js`: Firebase Project ID 누락 시 과거 `donghyun-algo`로 향하던 Fallback 값을 최신 `donghyun-hackthon`으로 수정.
+  * `js/data/firebase-config.js`: 상단 헤더 주석의 프로젝트 ID 및 정원(28명, 총 308명) 동기화.
+  * `js/data/config.example.js`: 폐기된 클라이언트 키 템플릿 안전 삭제 및 `README.md` 표 정비.
+  * `docs/DATABASE.md`: 최신 해커톤 Firestore 구조(`learning_classes`, `submissions`, `classrooms`, `teachers`, `ai_usage`) 전면 반영.
+  * `docs/PLATFORM_STRUCTURE_REVIEW.md`: 이전 기획명 `교수평기 올인원` 주석 및 `정보 놀이터` 명칭 정비.
+  * `audit/*.png`(28개), `tests/results/*.png`(46개) 불필요한 과거 바이너리 스크린샷 74개 삭제 및 `.gitignore` 등록.
+- 검증: `tools/check.cjs` 70개 스크립트 문법 및 HTML 자산 검사 통과, `node --test tests/*.test.cjs` 63개 전체 통과.
+- 최신 기준은 항상 `origin/feature/hackathon`이다. 현재 작업 브랜치는 사용자 검토 및 병합 승인 대기 상태이다.
+- 최근 운영 병합 커밋: `4d3fd6c`.
 - 최근 대문 제품 병합 커밋: `a5e8fd6`.
-- 최근 상태 문서 커밋: `71f4b7a` 이후의 `origin/feature/hackathon` 로그를 기준으로 한다.
 - 2026-09-13 Vercel 운영 화면에서 HTTP 200, 정문 로봇 표시·방향키 이동·첫 안내 제거, AI 튜터 닫힘·열림, 콘솔 오류 0건을 확인했다.
 - 로컬에서 `index.html`을 `file://`로 직접 열면 외부 SVG 마스크 처리 차이로 로봇이 보이지 않을 수 있다. 개발 확인은 `node tools/preview.cjs`의 `http://127.0.0.1:4173/?demo=1`을 사용한다. 실제 로그인·저장·AI는 운영 환경에서 별도로 검증한다.
 

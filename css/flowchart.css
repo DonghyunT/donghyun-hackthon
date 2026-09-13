@@ -1220,31 +1220,7 @@ body.studio-mode .entry-studio-l2-container {
 /* ========================================== */
 /* 🤖 우측 엣지 쇽 튀어나오는 피커부 챗봇 탭 */
 /* ========================================== */
-.chatbot-peek-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  color: #ffffff;
-  padding: 10px 18px 10px 14px;
-  border-top-left-radius: 9999px;
-  border-bottom-left-radius: 9999px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border: 2.5px solid rgba(255, 255, 255, 0.45);
-  border-right: none;
-  box-shadow: -4px 6px 20px rgba(37, 99, 235, 0.38);
-  cursor: pointer;
-  transform: translateX(52%);
-  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
-  user-select: none;
-}
 
-.chatbot-peek-tab:hover,
-.chatbot-peek-tab.chat-open {
-  transform: translateX(0) !important;
-  box-shadow: -6px 8px 26px rgba(37, 99, 235, 0.5);
-}
 
 /* ==========================================
    8. 🎓 띵커보드 제출 모달 학번/이름 시선 집중 하이라이트 & 쉐이크

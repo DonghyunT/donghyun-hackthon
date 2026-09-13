@@ -198,10 +198,7 @@
 
     <!-- [TAB 1] 🧭 단원별 학습 로드맵 (Roadmap Dashboard) -->
     <main id="view-roadmap" class="playground-home w-full flex-1 mx-auto">
-      <section class="pg-heading" aria-labelledby="home-heading">
-        <div><p class="pg-eyebrow">생각하고, 만들고, 함께 배우는 곳</p><h1 id="home-heading">정보 놀이터</h1></div>
-        <p>가고 싶은 수업으로 한 걸음.<br><span>작은 발견이 나의 기록으로 쌓여요.</span></p>
-      </section>
+      <h1 class="sr-only">정보 놀이터 수업 지도</h1>
       <div id="playground-mount"></div>
       <nav id="playground-fallback" aria-label="활동 바로가기">
         <p>오늘 배울 내용을 골라 보세요.</p>
@@ -2357,7 +2354,8 @@
     </div>
 
     <!-- 챗봇 피커부 탭 토글 버튼 (우측 벽면 반숨김 ➔ 호버/클릭 시 쇽 튀어나옴) -->
-    <button onclick="toggleTutorChat()" id="tutor-fab-btn" class="chatbot-peek-tab pointer-events-auto" title="AI 학습 도우미 열기">
+    <button onclick="toggleTutorChat()" id="tutor-fab-btn" class="chatbot-peek-tab pointer-events-auto" title="AI 학습 도우미 열기"
+            aria-label="AI 튜터 열기" aria-controls="tutor-chat-window" aria-expanded="false">
       <i class="fa-solid fa-comment-dots text-lg"></i>
       <span class="text-xs font-black tracking-tight select-none">AI 튜터</span>
     </button>

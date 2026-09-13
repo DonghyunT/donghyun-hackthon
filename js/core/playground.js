@@ -3,11 +3,12 @@
   'use strict';
   const POSITION_KEY = 'playground-position-v2';
   const SEEN_KEY = 'playground-seen-v1';
+  const MOVED_KEY = 'playground-moved-v1';
   const WIDTH = 1000, HEIGHT = 620, SPEED = 210;
-  let root, map, avatar, panel, enterButton, help, domains;
+  let root, map, shell, shortcuts, dpad, toolbar, avatar, panel, enterButton, help, domains;
   let x = 500, y = 580, frame = 0, previous = 0, near = null;
-  let reduced = false, systemMotion, observer;
-  const keys = new Set();
+  let reduced = false, systemMotion, observer, headerObserver, fitFrame = 0;
+  const keyboardKeys = new Set(), pointerKeys = new Set();
   const arrows = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
   function read(key) { try { return sessionStorage.getItem(key); } catch (_) { return null; } }
   function write(key, value) { try { sessionStorage.setItem(key, value); } catch (_) { /* Private mode still supports navigation. */ } }
@@ -27,7 +28,7 @@
     node.addEventListener('click', action); return node;
   }
   function stop() {
-    keys.clear();
+    keyboardKeys.clear(); pointerKeys.clear();
     if (frame) cancelAnimationFrame(frame);
     frame = 0; previous = 0;
     avatar?.classList.remove('is-walking');
@@ -58,23 +59,56 @@
       help.textContent = near ? near.place + ' 앞이에요. Enter로 들어갈 수 있어요.' : '방향키로 이동 · Enter로 입장 · 건물을 눌러도 바로 들어가요';
     }
   }
+  function markMoved() {
+    if (read(MOVED_KEY)) return;
+    write(MOVED_KEY, '1');
+    root.classList.remove('pg-awaiting-move');
+    map.querySelectorAll('.pg-first-hint')[0]?.remove();
+    map.setAttribute('aria-describedby', 'pg-help');
+  }
+  function move(dx, dy, distance) {
+    const magnitude = Math.hypot(dx, dy);
+    if (!magnitude) return false;
+    dx = dx / magnitude * distance; dy = dy / magnitude * distance;
+    const beforeX = x, beforeY = y;
+    if (walkable(x + dx, y)) x += dx;
+    if (walkable(x, y + dy)) y += dy;
+    avatar.dataset.direction = Math.abs(dy) >= Math.abs(dx) ? (dy < 0 ? 'up' : 'down') : (dx < 0 ? 'left' : 'right');
+    const moved = x !== beforeX || y !== beforeY;
+    if (moved) markMoved();
+    update();
+    return moved;
+  }
   function tick(time) {
     frame = 0;
-    if (!visible() || !allowed() || document.activeElement !== map || keys.size === 0) { stop(); return; }
+    const activeKeys = new Set([...keyboardKeys, ...pointerKeys]);
+    if (!visible() || !allowed() || (!pointerKeys.size && document.activeElement !== map) || activeKeys.size === 0) { stop(); return; }
     const dt = previous ? Math.min((time - previous) / 1000, 0.035) : 1 / 60;
     previous = time;
     let dx = 0, dy = 0;
-    keys.forEach(key => { dx += arrows[key][0]; dy += arrows[key][1]; });
-    const length = Math.hypot(dx, dy);
-    if (length) {
-      dx = dx / length * SPEED * dt; dy = dy / length * SPEED * dt;
-      if (walkable(x + dx, y)) x += dx;
-      if (walkable(x, y + dy)) y += dy;
-      avatar.dataset.direction = Math.abs(dy) >= Math.abs(dx) ? (dy < 0 ? 'up' : 'down') : (dx < 0 ? 'left' : 'right');
-    }
-    avatar.classList.toggle('is-walking', length > 0 && !reduced);
-    update();
+    activeKeys.forEach(key => { dx += arrows[key][0]; dy += arrows[key][1]; });
+    avatar.classList.toggle('is-walking', move(dx, dy, SPEED * dt) && !reduced);
     frame = requestAnimationFrame(tick);
+  }
+  function fitViewport() {
+    fitFrame = 0;
+    if (!shell || !shortcuts || !visible()) return;
+    shell.style.width = ''; shortcuts.style.width = '';
+    const viewportWidth = window.innerWidth || 1200;
+    if (viewportWidth <= 760) return;
+    const header = document.getElementById('global-header');
+    const headerHeight = header?.getBoundingClientRect?.().height || 73;
+    const toolbarHeight = toolbar?.getBoundingClientRect?.().height || 56;
+    const dpadHeight = dpad?.getBoundingClientRect?.().height || 0;
+    const rootStyle = typeof getComputedStyle === 'function' ? getComputedStyle(root) : null;
+    const rootPadding = rootStyle ? parseFloat(rootStyle.paddingTop) + parseFloat(rootStyle.paddingBottom) : 40;
+    const availableMapHeight = Math.max(280, (window.innerHeight || 800) - headerHeight - toolbarHeight - dpadHeight - rootPadding - 8);
+    const width = Math.floor(Math.min(viewportWidth * .94, 1680, availableMapHeight * 16 / 9));
+    shell.style.width = width + 'px'; shortcuts.style.width = width + 'px';
+  }
+  function scheduleFit() {
+    if (fitFrame) cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(fitViewport);
   }
   function setMotion() {
     reduced = systemMotion.matches;
@@ -147,7 +181,7 @@
     root = document.getElementById('view-roadmap');
     domains = window.PLAYGROUND_CURRICULUM;
     if (!root || !Array.isArray(domains) || domains.length !== 5) return;
-    const shell = element('section', 'pg-map-shell');
+    shell = element('section', 'pg-map-shell');
     shell.setAttribute('aria-label', '다섯 수업 건물이 있는 정보 놀이터');
     map = element('div', 'pg-map'); map.id = 'playground-map'; map.tabIndex = 0;
     map.setAttribute('role', 'group');
@@ -173,16 +207,63 @@
     avatar.dataset.direction = 'up';
     avatar.append(element('span', 'pg-robot-sprite'));
     map.append(avatar);
-    const welcome = element('span', 'pg-welcome', '오늘은 어떤 발견을 해 볼까?');
-    welcome.setAttribute('aria-hidden', 'true'); map.append(welcome);
+    if (!read(MOVED_KEY)) {
+      const hint = element('span', 'pg-first-hint');
+      hint.id = 'pg-first-hint';
+      hint.append(element('span', '', '로봇을 움직여 수업 건물로 가 보세요'));
+      const hintDetail = element('small');
+      hintDetail.append(element('span', 'hint-key', '방향키로 이동'), element('span', 'hint-touch', '화면의 방향 버튼으로 이동'));
+      hint.append(hintDetail);
+      map.append(hint);
+      map.setAttribute('aria-describedby', 'pg-help pg-first-hint');
+      root.classList.add('pg-awaiting-move');
+    }
+    dpad = element('div', 'pg-dpad');
+    dpad.setAttribute('role', 'group');
+    dpad.setAttribute('aria-label', '방향 패드');
+    function directionButton(className, text, label, key) {
+      const node = button(className, text, event => {
+        if (event.detail !== 0 || !allowed()) return;
+        const [dx, dy] = arrows[key]; move(dx, dy, 14);
+      });
+      node.setAttribute('aria-label', label); return node;
+    }
+    const btnUp = directionButton('dpad-up', '▲', '위로 이동', 'ArrowUp');
+    const btnDown = directionButton('dpad-down', '▼', '아래로 이동', 'ArrowDown');
+    const btnLeft = directionButton('dpad-left', '◀', '왼쪽으로 이동', 'ArrowLeft');
+    const btnRight = directionButton('dpad-right', '▶', '오른쪽으로 이동', 'ArrowRight');
+    dpad.append(btnUp, btnLeft, btnDown, btnRight);
+    const dpadEvents = (btn, key) => {
+      btn.addEventListener('pointerdown', event => {
+        if (!allowed() || event.altKey || event.ctrlKey || event.metaKey) return;
+        event.preventDefault();
+        btn.setPointerCapture?.(event.pointerId);
+        pointerKeys.add(key);
+        const [dx, dy] = arrows[key]; move(dx, dy, 10);
+        avatar.classList.toggle('is-walking', !reduced);
+        if (!frame) { previous = performance.now(); frame = requestAnimationFrame(tick); }
+      });
+      const endPointer = event => {
+        pointerKeys.delete(key);
+        if (event && btn.hasPointerCapture?.(event.pointerId)) btn.releasePointerCapture(event.pointerId);
+        if (!pointerKeys.size && !keyboardKeys.size) stop();
+      };
+      btn.addEventListener('pointerup', endPointer);
+      btn.addEventListener('pointercancel', endPointer);
+      btn.addEventListener('lostpointercapture', endPointer);
+    };
+    dpadEvents(btnUp, 'ArrowUp');
+    dpadEvents(btnDown, 'ArrowDown');
+    dpadEvents(btnLeft, 'ArrowLeft');
+    dpadEvents(btnRight, 'ArrowRight');
     shell.append(map);
-    const toolbar = element('div', 'pg-map-toolbar');
+    toolbar = element('div', 'pg-map-toolbar');
     help = element('p', 'pg-help', '방향키로 이동 · Enter로 입장 · 건물을 눌러도 바로 들어가요');
     help.id = 'pg-help'; help.setAttribute('role', 'status');
     enterButton = button('pg-enter', '건물 앞으로 이동해 보세요', () => { if (near) openDomain(near.id, map); });
     enterButton.disabled = true;
-    toolbar.append(help, enterButton); shell.append(toolbar);
-    const shortcuts = element('nav', 'pg-shortcuts'); shortcuts.setAttribute('aria-label', '수업 바로 고르기');
+    toolbar.append(help, enterButton); shell.append(toolbar, dpad);
+    shortcuts = element('nav', 'pg-shortcuts'); shortcuts.setAttribute('aria-label', '수업 바로 고르기');
     domains.forEach(d => shortcuts.append(button('', d.name + ' →', event => openDomain(d.id, event.currentTarget))));
     const mount = document.getElementById('playground-mount');
     mount.replaceChildren(shell, shortcuts);
@@ -205,7 +286,7 @@
     map.addEventListener('keydown', event => {
       if (event.target !== map || !allowed() || event.altKey || event.ctrlKey || event.metaKey) return;
       if (arrows[event.key]) {
-        event.preventDefault(); keys.add(event.key);
+        event.preventDefault(); keyboardKeys.add(event.key);
         if (!frame) tick(performance.now());
       } else if (event.key === 'Enter' && near) {
         event.preventDefault(); openDomain(near.id, map);
@@ -213,18 +294,24 @@
     });
     window.addEventListener('keyup', event => {
       if (!arrows[event.key]) return;
-      keys.delete(event.key); if (!keys.size) stop();
+      keyboardKeys.delete(event.key); if (!keyboardKeys.size && !pointerKeys.size) stop();
     });
     map.addEventListener('blur', stop);
     window.addEventListener('blur', stop);
     document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
     window.addEventListener('pagehide', stop);
-    observer = new MutationObserver(() => { if (!visible()) leave(); });
+    observer = new MutationObserver(() => { if (!visible()) leave(); else scheduleFit(); });
     observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('resize', scheduleFit);
+    const header = document.getElementById('global-header');
+    if (header && typeof ResizeObserver !== 'undefined') {
+      headerObserver = new ResizeObserver(scheduleFit); headerObserver.observe(header);
+    }
     update();
     document.getElementById('playground-fallback')?.remove();
     // The header, login or an assessment can take focus first; never steal it.
     requestAnimationFrame(() => {
+      fitViewport();
       if (visible() && allowed() && document.activeElement === document.body) map.focus({ preventScroll: true });
     });
   }

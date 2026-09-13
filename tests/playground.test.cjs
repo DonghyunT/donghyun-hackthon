@@ -4,6 +4,16 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
+test('robot sprite keeps standard and Chrome-compatible directional masks', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'css', 'playground.css'), 'utf8');
+  for (const direction of ['down', 'left', 'right', 'up']) {
+    const rule = css.match(new RegExp(`\\.pg-avatar\\[data-direction=${direction}\\] \\.pg-robot-sprite\\{([^}]*)\\}`))?.[1] || '';
+    assert.match(rule, new RegExp(`mask-image:url\\(assets/robot-mask-${direction}\\.svg\\)`));
+    assert.match(rule, new RegExp(`-webkit-mask-image:url\\(assets/robot-mask-${direction}\\.svg\\)`));
+  }
+  assert.match(css, /\.pg-avatar \.pg-robot-sprite\{[^}]*-webkit-mask-size:100% 100%;[^}]*-webkit-mask-repeat:no-repeat;/);
+});
+
 // Lightweight DOM harness: run the real controller and exercise user events,
 // without browser screenshots, Firebase, or copying its movement calculation.
 function campus(saved = {}, options = {}) {
@@ -103,6 +113,31 @@ test('all five doors are reachable from the bottom entrance by arrows and Enter'
     assert.equal(c.course.classList.contains('hidden'), false, `${id} opens at ${c.point()}`);
     assert.equal(c.course.dataset.domain, id); assert.equal(c.frames.size, 0);
   }
+});
+
+test('touch direction pad moves immediately, dismisses its cue, and stops on release', () => {
+  const c = campus(), up = c.root.querySelectorAll('.dpad-up')[0];
+  const hint = c.root.querySelectorAll('.pg-first-hint')[0];
+  let prevented = false;
+  up.dispatch('pointerdown', { pointerId: 1, preventDefault() { prevented = true; } });
+  c.advance(5); up.dispatch('pointerup', { pointerId: 1 });
+  assert.equal(prevented, true); assert.ok(c.point()[1] < 570);
+  assert.equal(hint.isConnected, false); assert.equal(c.storage.get('playground-moved-v1'), '1');
+  const stopped = c.point(); c.advance(10); assert.deepEqual(c.point(), stopped); assert.equal(c.frames.size, 0);
+});
+
+test('direction pad keyboard activation shares movement and respects assessment lock', () => {
+  const c = campus(), right = c.root.querySelectorAll('.dpad-right')[0];
+  right.dispatch('click', { detail: 0 }); assert.ok(c.point()[0] > 500);
+  const moved = c.point(); c.lock(true); right.dispatch('click', { detail: 0 });
+  assert.deepEqual(c.point(), moved);
+});
+
+test('direction pad pointer cancellation cannot leave movement running', () => {
+  const c = campus(), left = c.root.querySelectorAll('.dpad-left')[0];
+  left.dispatch('pointerdown', { pointerId: 2, preventDefault() {} }); c.advance(3);
+  left.dispatch('pointercancel', { pointerId: 2 }); const cancelled = c.point();
+  c.advance(10); assert.deepEqual(c.point(), cancelled); assert.equal(c.frames.size, 0);
 });
 
 test('building collisions and outer borders stop movement while release leaves no loop', () => {
